@@ -36,6 +36,7 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             zigpkgs.master
+            nodejs
           ];
         };
 
