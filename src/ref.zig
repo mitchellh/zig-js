@@ -2,6 +2,18 @@ const std = @import("std");
 const assert = std.debug.assert;
 const js = @import("main.zig");
 
+/// Possible types of values.
+pub const Type = enum {
+    invalid,
+    null,
+    boolean,
+    number,
+    object,
+    string,
+    symbol,
+    function,
+};
+
 /// Ref uniquely identifies a JS value. A JS value can't be physically
 /// copied to the WASM environment so we represent it using a 64-bit number
 /// into a table that is maintained on the JS side.
@@ -27,7 +39,8 @@ pub const Ref = packed struct(u64) {
     /// so that we can use the lower 51 bits.
     const nanHead: u29 = 0x7FF8_0000 >> 3;
 
-    /// These are the type_id types we support.
+    /// These are the type_id types we support. This doesn't match the
+    /// "Type" enum because some types are inferred based on their structure.
     const TypeId = enum(u3) {
         inferred = 0,
         object = 1,

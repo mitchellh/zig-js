@@ -17,8 +17,9 @@
 //! Zig doesn't have a runtime and doesn't behave anything like Go.
 
 const ref = @import("ref.zig");
+const value = @import("value.zig");
 pub usingnamespace ref;
-pub const Value = @import("Value.zig");
+pub usingnamespace value;
 
 /// Errors that can occur in this package.
 pub const Error = error{
@@ -26,21 +27,9 @@ pub const Error = error{
     InvalidType,
 };
 
-/// Possible types of values.
-pub const Type = enum {
-    invalid,
-    null,
-    boolean,
-    number,
-    object,
-    string,
-    symbol,
-    function,
-};
-
 /// The global object, i.e. "global" in the JS environment.
-pub fn global() Value {
-    return .{ .ref = ref.Ref.global };
+pub fn global() value.Value {
+    return @intToEnum(value.Value, @bitCast(u64, ref.Ref.global));
 }
 
 test {
