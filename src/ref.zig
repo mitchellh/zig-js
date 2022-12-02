@@ -11,9 +11,9 @@ const js = @import("main.zig");
 /// representation to encode additional data into the ref. Bits 0-47
 /// are used as an ID and bits 48-51 are used as a type ID.
 pub const Ref = packed struct(u64) {
-    head: u13 = nanMask,
+    id: u32 = 0,
     type_id: TypeId = .inferred,
-    id: u48 = 0,
+    head: u29 = 0b0111_1111_1111_1000_0000_0000_0000_0,
 
     /// Predefined refs.
     pub const nan: Ref = .{ .id = 0 };
@@ -25,7 +25,7 @@ pub const Ref = packed struct(u64) {
     /// NaN in IEEE-754 is 0b0111_1111_1111_<anything other than all zeroes>.
     /// We always force NaN to have a 1-bit set in the 4th byte from the MSB
     /// so that we can use the lower 51 bits.
-    const nanMask: u13 = 0x7FF8 >> 3;
+    const nanHead: u29 = 0x7FF8_0000 >> 3;
 
     /// These are the type_id types we support.
     const TypeId = enum(u3) {
@@ -39,7 +39,7 @@ pub const Ref = packed struct(u64) {
     /// Returns the type of a ref.
     pub fn typeOf(self: Ref) js.Type {
         // If we aren't a NaN then we have to be a number
-        if (self.head != nanMask) return .number;
+        if (self.head != nanHead) return .number;
 
         return switch (self.type_id) {
             .object => .object,
@@ -62,13 +62,26 @@ pub const Ref = packed struct(u64) {
     /// into our environment. And we don't need to release the predefined
     /// values because they're always retained.
     pub fn isReleasable(self: Ref) bool {
-        return self.head != nanMask or
+        return self.head != nanHead or
             self.type_id == .inferred;
     }
 
     pub fn toF64(self: Ref) f64 {
         assert(self.typeOf() == .number);
         return @bitCast(f64, self);
+    }
+
+    // This just helps test what JS will do
+    test "js comparisons" {
+        const testing = std.testing;
+
+        {
+            const n: u64 = (@intCast(u64, @intCast(u32, nanHead) << 3 | 2) << 32) | 14;
+            const ref = @bitCast(Ref, n);
+            try testing.expectEqual(nanHead, ref.head);
+            try testing.expectEqual(js.Type.string, ref.typeOf());
+            try testing.expectEqual(@as(u32, 14), ref.id);
+        }
     }
 
     test "types" {

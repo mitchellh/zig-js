@@ -2,6 +2,8 @@ const nan_prefix = 0x7FF8_0000;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8");
 
+const PREDEFINED_ID_MAX = 4;
+
 /**
  * The main state.
  * */
@@ -34,6 +36,7 @@ export class ZigJS {
     return {
       "zig-js": {
         valueGet: this.valueGet.bind(this),
+        valueDeinit: this.valueDeinit.bind(this),
       },
     };
   }
@@ -41,19 +44,25 @@ export class ZigJS {
   /**
    * Get a value from the JS environment.
    * */
-  protected valueGet(ref: number, ptr: number, len: number): number {
-    const val = this.loadValue(ref);
+  protected valueGet(id: number, ptr: number, len: number): number {
+    const val = this.loadValue(id);
     const str = this.loadString(ptr, len);
     const result = Reflect.get(val, str);
     return this.storeValue(result);
   }
 
-  loadValue(ref: number): any {
-    // If the value isn't NaN then it is our actual value.
-    if (!isNaN(ref)) return ref;
+  /**
+   * Dereference a value, allowing the JS environment to potentially GC it.
+   * */
+  protected valueDeinit(id: number): void {
+    // Do not allow deinitializing our predefined values
+    if (id > PREDEFINED_ID_MAX) {
+      this.values[id] = null;
+      this.idPool.push(id);
+    }
+  }
 
-    // Otherwise we look it up in our values
-    const id = refToId(ref);
+  loadValue(id: number): any {
     return this.values[id];
   }
 
@@ -120,9 +129,15 @@ export const predefined = {
 export interface ImportObject {
   "zig-js": {
     valueGet: (ref: number, ptr: number, len: number) => number;
+    valueDeinit: (id: number) => void;
   };
 };
 
+/**
+ * Convert an id to a ref. These are only exported so they can be tested.
+ *
+ * @private
+ * */
 export function idToRef(id: number): number {
   let bytes = new Uint32Array(2);
   bytes[0] = id;
@@ -130,6 +145,11 @@ export function idToRef(id: number): number {
   return new Float64Array(bytes.buffer)[0];
 }
 
+/**
+ * Convert an ref to an ID. This is only exported so it can be tested.
+ *
+ * @private
+ * */
 export function refToId(ref: number): number {
   let floats = new Float64Array([ref]);
   let bytes = new Uint32Array(floats.buffer);
