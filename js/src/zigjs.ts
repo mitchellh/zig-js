@@ -1,4 +1,4 @@
-import { NAN_PREFIX, PREDEFINED_ID_MAX, predefined } from './ref';
+import { NAN_PREFIX, PREDEFINED_ID_MAX, predefined, refToId } from './ref';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8");
@@ -35,7 +35,9 @@ export class ZigJS {
     return {
       "zig-js": {
         valueGet: this.valueGet.bind(this),
+        valueSet: this.valueSet.bind(this),
         valueDeinit: this.valueDeinit.bind(this),
+        valueObjectCreate: this.valueObjectCreate.bind(this),
         valueStringCreate: this.valueStringCreate.bind(this),
         valueStringLen: this.valueStringLen.bind(this),
       },
@@ -53,6 +55,16 @@ export class ZigJS {
   }
 
   /**
+   * Set a value on an object.
+   * */
+  protected valueSet(id: number, ptr: number, len: number, valueRef: number): void {
+    const obj = this.loadValue(id);
+    const str = this.loadString(ptr, len);
+    const val = this.loadRef(valueRef);
+    Reflect.set(obj, str, val);
+  }
+
+  /**
    * Dereference a value, allowing the JS environment to potentially GC it.
    * */
   protected valueDeinit(id: number): void {
@@ -64,11 +76,19 @@ export class ZigJS {
   }
 
   /**
+   * Create an empty object.
+   * */
+  protected valueObjectCreate(): number {
+    return this.storeValue(new Object());
+  }
+
+  /**
    * Creates a string on the JS side from a UTF-8 encoded string in wasm memory.
    * */
   protected valueStringCreate(ptr: number, len: number): number {
     const str = this.loadString(ptr, len);
-    return this.storeValue(str);
+    const result = this.storeValue(str);
+    return result;
   }
 
 
@@ -78,6 +98,11 @@ export class ZigJS {
   protected valueStringLen(id: number): number {
     const val = this.loadValue(id);
     return val.length;
+  }
+
+  loadRef(ref: number): any {
+    if (isNaN(ref)) return this.loadValue(refToId(ref));
+    return ref;
   }
 
   loadValue(id: number): any {
@@ -138,9 +163,11 @@ export class ZigJS {
 
 export interface ImportObject {
   "zig-js": {
-    valueGet: (ref: number, ptr: number, len: number) => number;
+    valueGet: (id: number, ptr: number, len: number) => number;
+    valueSet: (id: number, ptr: number, len: number, valueRef: number) => void;
     valueDeinit: (id: number) => void;
     valueStringCreate: (ptr: number, len: number) => number;
+    valueObjectCreate: () => number;
     valueStringLen: (id: number) => number;
   };
 };

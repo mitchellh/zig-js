@@ -12,6 +12,9 @@ const ext = @import("extern.zig");
 /// value into a JS value.
 pub const String = struct { ptr: [*]const u8, len: usize };
 
+/// Only used with Value.init to denote an object type.
+pub const Object = struct {};
+
 /// A value represents a JS value. This is the low-level "untyped" interface
 /// to any generic JS value. It is more ergonomic to use the higher level
 /// wrappers such as Object.
@@ -31,6 +34,8 @@ pub const Value = enum(u64) {
     /// must be wrapped in the String type prior to calling this. Otherwise,
     /// an array is assumed. If a string is created, the bytes pointed to by the
     /// string can be freed after this call -- they are copied to the JS side.
+    ///
+    /// Objects are created by passing in the empty Object struct.
     pub fn init(x: anytype) Value {
         return switch (@typeInfo(@TypeOf(x))) {
             .Null => .null,
@@ -48,6 +53,7 @@ pub const Value = enum(u64) {
             .Int => init(@intToFloat(f64, x)),
 
             else => switch (@TypeOf(x)) {
+                Object => @intToEnum(Value, ext.valueObjectCreate()),
                 String => @intToEnum(Value, ext.valueStringCreate(x.ptr, x.len)),
                 else => unreachable,
             },
@@ -64,7 +70,13 @@ pub const Value = enum(u64) {
     /// Get the value of a property of an object.
     pub fn get(self: Value, n: []const u8) !Value {
         if (self.typeOf() != .object) return js.Error.InvalidType;
-        return Value{ .ref = ext.valueGet(self.ref().id, n.ptr, n.len) };
+        return @intToEnum(Value, ext.valueGet(self.ref().id, n.ptr, n.len));
+    }
+
+    /// Set the value of a property on an object.
+    pub fn set(self: Value, n: []const u8, v: Value) !void {
+        if (self.typeOf() != .object) return js.Error.InvalidType;
+        ext.valueSet(self.ref().id, n.ptr, n.len, @bitCast(u64, v.ref()));
     }
 
     /// Returns the float value if this is a number.
@@ -148,4 +160,19 @@ test "Value.init: strings" {
         defer alloc.free(copy);
         try testing.expectEqualStrings(str, copy);
     }
+}
+
+test "Value: objects" {
+    const testing = std.testing;
+    //const alloc = testing.allocator;
+    defer ext.deinit();
+
+    const root = Value.init(Object{});
+    defer root.deinit();
+    try testing.expectEqual(js.Type.object, root.typeOf());
+
+    try root.set("count", Value.init(42));
+
+    const count = try root.get("count");
+    try testing.expectEqual(@as(f64, 42), count.float());
 }

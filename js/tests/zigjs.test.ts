@@ -72,6 +72,52 @@ test('valueGet: string', () => {
   }
 });
 
+test('valueSet: number', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+  const f = obj["zig-js"].valueSet;
+
+  // Set our memory
+  const memory = new ArrayBuffer(128);
+  st.memory = new DataView(memory);
+
+  // Write our string
+  const key = "__zigjs_number";
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Write our key into the global value
+  globalThis[key] = 12;
+
+  // Set it
+  f(refToId(predefined.globalThis), 0, write.written ?? 0, 42);
+  expect(globalThis[key]).toEqual(42);
+});
+
+test('valueSet: ref', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+  const f = obj["zig-js"].valueSet;
+
+  // Set our memory
+  const memory = new ArrayBuffer(128);
+  st.memory = new DataView(memory);
+
+  // Write our string
+  const key = "__zigjs_boolean";
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Write our key into the global value
+  globalThis[key] = false;
+
+  // Set it
+  f(refToId(predefined.globalThis), 0, write.written ?? 0, predefined.true);
+  expect(globalThis[key]).toEqual(true);
+});
+
 test('valueStringCreate', () => {
   const st = new ZigJS();
   const obj = st.importObject();
@@ -93,8 +139,21 @@ test('valueStringCreate', () => {
   expect(st.loadValue(refToId(ref))).toEqual(value);
 });
 
+test('valueObjectCreate', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+
+  // Read it
+  let f = obj["zig-js"].valueObjectCreate;
+  const ref = f();
+  expect(ref).toBeNaN();
+  expect(st.loadValue(refToId(ref))).toEqual({});
+});
+
+
 // We need to extend our global value for test keys
 declare global {
+  var __zigjs_boolean: boolean;
   var __zigjs_number: number;
   var __zigjs_string: string;
 }
