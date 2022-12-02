@@ -36,6 +36,7 @@ export class ZigJS {
       "zig-js": {
         valueGet: this.valueGet.bind(this),
         valueDeinit: this.valueDeinit.bind(this),
+        valueStringLen: this.valueStringLen.bind(this),
       },
     };
   }
@@ -59,6 +60,14 @@ export class ZigJS {
       this.values[id] = null;
       this.idPool.push(id);
     }
+  }
+
+  /**
+   * Returns the length of the string given by id.
+   * */
+  protected valueStringLen(id: number): number {
+    const val = this.loadValue(id);
+    return val.length;
   }
 
   loadValue(id: number): any {
@@ -121,5 +130,6 @@ export interface ImportObject {
   "zig-js": {
     valueGet: (ref: number, ptr: number, len: number) => number;
     valueDeinit: (id: number) => void;
+    valueStringLen: (id: number) => number;
   };
 };
