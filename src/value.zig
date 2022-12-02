@@ -22,6 +22,27 @@ pub const Value = enum(u64) {
 
     _,
 
+    /// Converts a Zig value to a JS value.
+    pub fn init(x: anytype) Value {
+        return switch (@typeInfo(@TypeOf(x))) {
+            .Null => .null,
+            .Bool => if (x) .true else .false,
+            .ComptimeInt => init(@intToFloat(f64, x)),
+            .ComptimeFloat => init(@floatCast(f64, x)),
+            .Float => |t| float: {
+                if (t.bits > 64) @compileError("Value only supports floats up to 64 bits");
+                if (std.math.isNan(x)) break :float .nan;
+                break :float @intToEnum(Value, @bitCast(u64, @floatCast(f64, x)));
+            },
+
+            // All numbers in JS are 64-bit floats, so we try the conversion
+            // here and accept a runtime/compile-time error if x is invalid.
+            .Int => init(@intToFloat(f64, x)),
+
+            else => unreachable,
+        };
+    }
+
     /// Deinitializes the value, allowing the JS environment to GC the value.
     pub fn deinit(self: Value) void {
         // We avoid releasing values that aren't releasable. This avoids
@@ -33,6 +54,12 @@ pub const Value = enum(u64) {
     pub fn get(self: Value, n: []const u8) !Value {
         if (self.typeOf() != .object) return js.Error.InvalidType;
         return Value{ .ref = valueGet(self.ref().id, n.ptr, n.len) };
+    }
+
+    /// Returns the float value if this is a number.
+    pub fn float(self: Value) f64 {
+        assert(self.typeOf() == .number);
+        return @bitCast(f64, @enumToInt(self));
     }
 
     /// Returns the UTF-8 encoded string value. The resulting value must be
@@ -57,6 +84,40 @@ pub const Value = enum(u64) {
     }
 
     inline fn ref(self: Value) js.Ref {
-        return @bitCast(u64, @enumToInt(self));
+        return @bitCast(js.Ref, @enumToInt(self));
     }
 };
+
+test "Value.init: null" {
+    const testing = std.testing;
+    try testing.expectEqual(Value.null, Value.init(null));
+}
+
+test "Value.init: bools" {
+    const testing = std.testing;
+    try testing.expectEqual(Value.true, Value.init(true));
+    try testing.expectEqual(Value.false, Value.init(false));
+}
+
+test "Value.init: floats" {
+    const testing = std.testing;
+    try testing.expectEqual(Value.nan, Value.init(std.math.nan_f16));
+    try testing.expectEqual(Value.nan, Value.init(std.math.nan_f32));
+    try testing.expectEqual(Value.nan, Value.init(std.math.nan_f64));
+
+    {
+        const v = Value.init(1.234);
+        try testing.expectEqual(js.Type.number, v.typeOf());
+        try testing.expectEqual(@as(f64, 1.234), v.float());
+    }
+}
+
+test "Value.init: ints" {
+    const testing = std.testing;
+
+    {
+        const v = Value.init(14);
+        try testing.expectEqual(js.Type.number, v.typeOf());
+        try testing.expectEqual(@as(f64, 14), v.float());
+    }
+}
