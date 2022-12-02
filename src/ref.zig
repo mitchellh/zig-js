@@ -25,7 +25,7 @@ pub const Type = enum {
 pub const Ref = packed struct(u64) {
     id: u32 = 0,
     type_id: TypeId = .inferred,
-    head: u29 = 0b0111_1111_1111_1000_0000_0000_0000_0,
+    head: u29 = nanHead,
 
     /// Predefined refs.
     pub const nan: Ref = .{ .id = 0 };
@@ -75,8 +75,7 @@ pub const Ref = packed struct(u64) {
     /// into our environment. And we don't need to release the predefined
     /// values because they're always retained.
     pub fn isReleasable(self: Ref) bool {
-        return self.head != nanHead or
-            self.type_id == .inferred;
+        return self.head == nanHead and self.type_id != .inferred;
     }
 
     pub fn toF64(self: Ref) f64 {

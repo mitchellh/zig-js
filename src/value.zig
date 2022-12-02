@@ -1,21 +1,16 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 const js = @import("main.zig");
-
-// This is the API that needs to be provided by the host environment.
-extern "zig-js" fn valueGet(id: u64, n: usize, len: usize) u64;
-extern "zig-js" fn valueStringCreate(addr: *u8, len: u64) u64;
-extern "zig-js" fn valueStringLen(id: u64) u64;
-extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
-extern "zig-js" fn valueDeinit(id: u64) void;
+const ext = @import("extern.zig");
 
 /// Only used with Value.init to denote a string type.
 ///
 /// This is NOT a JS string. This is just a sentinel type so that we can
 /// differentiate a slice and a "string" when trying to convert a Zig
 /// value into a JS value.
-pub const String = struct { ptr: [*]u8, len: usize };
+pub const String = struct { ptr: [*]const u8, len: usize };
 
 /// A value represents a JS value. This is the low-level "untyped" interface
 /// to any generic JS value. It is more ergonomic to use the higher level
@@ -53,7 +48,7 @@ pub const Value = enum(u64) {
             .Int => init(@intToFloat(f64, x)),
 
             else => switch (@TypeOf(x)) {
-                String => @intToEnum(Value, valueStringCreate(x.ptr, x.len)),
+                String => @intToEnum(Value, ext.valueStringCreate(x.ptr, x.len)),
                 else => unreachable,
             },
         };
@@ -63,13 +58,13 @@ pub const Value = enum(u64) {
     pub fn deinit(self: Value) void {
         // We avoid releasing values that aren't releasable. This avoids
         // crossing the js/wasm boundary for a bit of performance.
-        if (self.ref().isReleasable()) valueDeinit(self.ref().id);
+        if (self.ref().isReleasable()) ext.valueDeinit(self.ref().id);
     }
 
     /// Get the value of a property of an object.
     pub fn get(self: Value, n: []const u8) !Value {
         if (self.typeOf() != .object) return js.Error.InvalidType;
-        return Value{ .ref = valueGet(self.ref().id, n.ptr, n.len) };
+        return Value{ .ref = ext.valueGet(self.ref().id, n.ptr, n.len) };
     }
 
     /// Returns the float value if this is a number.
@@ -84,12 +79,12 @@ pub const Value = enum(u64) {
         if (self.typeOf() != .string) return js.Error.InvalidType;
 
         // Get the length and allocate our pointer
-        const len = valueStringLen(self.ref().id);
+        const len = ext.valueStringLen(self.ref().id);
         var buf = try alloc.alloc(u8, len);
         errdefer alloc.free(buf);
 
         // Copy the string into the buffer
-        valueStringCopy(self.ref().id, buf.ptr, buf.len);
+        ext.valueStringCopy(self.ref().id, buf.ptr, buf.len);
 
         return buf;
     }
@@ -135,5 +130,22 @@ test "Value.init: ints" {
         const v = Value.init(14);
         try testing.expectEqual(js.Type.number, v.typeOf());
         try testing.expectEqual(@as(f64, 14), v.float());
+    }
+}
+
+test "Value.init: strings" {
+    const testing = std.testing;
+    const alloc = testing.allocator;
+    defer ext.deinit();
+
+    {
+        const str = "hello!";
+        const v = Value.init(String{ .ptr = @ptrCast([*]const u8, str), .len = str.len });
+        defer v.deinit();
+        try testing.expectEqual(js.Type.string, v.typeOf());
+
+        const copy = try v.string(alloc);
+        defer alloc.free(copy);
+        try testing.expectEqualStrings(str, copy);
     }
 }
