@@ -1,4 +1,5 @@
-import { ZigJS, idToRef, refToId, predefined } from '../src';
+import { ZigJS } from '../src';
+import { idToRef, refToId, predefined } from '../src/ref';
 
 test('ref conversion', () => {
   const st = new ZigJS();
