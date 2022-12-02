@@ -72,6 +72,27 @@ test('valueGet: string', () => {
   }
 });
 
+test('valueStringCreate', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+
+  // Set our memory
+  const memory = new ArrayBuffer(128);
+  st.memory = new DataView(memory);
+
+  // Write our string into memory
+  const value = "hello, world!";
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(value, new Uint8Array(memory));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Read it
+  let f = obj["zig-js"].valueStringCreate;
+  const ref = f(0, write.written ?? 0);
+  expect(ref).toBeNaN();
+  expect(st.loadValue(refToId(ref))).toEqual(value);
+});
+
 // We need to extend our global value for test keys
 declare global {
   var __zigjs_number: number;

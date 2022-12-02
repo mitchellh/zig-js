@@ -5,9 +5,17 @@ const js = @import("main.zig");
 
 // This is the API that needs to be provided by the host environment.
 extern "zig-js" fn valueGet(id: u64, n: usize, len: usize) u64;
+extern "zig-js" fn valueStringCreate(addr: *u8, len: u64) u64;
 extern "zig-js" fn valueStringLen(id: u64) u64;
 extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
 extern "zig-js" fn valueDeinit(id: u64) void;
+
+/// Only used with Value.init to denote a string type.
+///
+/// This is NOT a JS string. This is just a sentinel type so that we can
+/// differentiate a slice and a "string" when trying to convert a Zig
+/// value into a JS value.
+pub const String = struct { ptr: [*]u8, len: usize };
 
 /// A value represents a JS value. This is the low-level "untyped" interface
 /// to any generic JS value. It is more ergonomic to use the higher level
@@ -23,6 +31,11 @@ pub const Value = enum(u64) {
     _,
 
     /// Converts a Zig value to a JS value.
+    ///
+    /// In order to tell the difference between a "string" and an array, strings
+    /// must be wrapped in the String type prior to calling this. Otherwise,
+    /// an array is assumed. If a string is created, the bytes pointed to by the
+    /// string can be freed after this call -- they are copied to the JS side.
     pub fn init(x: anytype) Value {
         return switch (@typeInfo(@TypeOf(x))) {
             .Null => .null,
@@ -39,7 +52,10 @@ pub const Value = enum(u64) {
             // here and accept a runtime/compile-time error if x is invalid.
             .Int => init(@intToFloat(f64, x)),
 
-            else => unreachable,
+            else => switch (@TypeOf(x)) {
+                String => @intToEnum(Value, valueStringCreate(x.ptr, x.len)),
+                else => unreachable,
+            },
         };
     }
 

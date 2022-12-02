@@ -36,6 +36,7 @@ export class ZigJS {
       "zig-js": {
         valueGet: this.valueGet.bind(this),
         valueDeinit: this.valueDeinit.bind(this),
+        valueStringCreate: this.valueStringCreate.bind(this),
         valueStringLen: this.valueStringLen.bind(this),
       },
     };
@@ -61,6 +62,15 @@ export class ZigJS {
       this.idPool.push(id);
     }
   }
+
+  /**
+   * Creates a string on the JS side from a UTF-8 encoded string in wasm memory.
+   * */
+  protected valueStringCreate(ptr: number, len: number): number {
+    const str = this.loadString(ptr, len);
+    return this.storeValue(str);
+  }
+
 
   /**
    * Returns the length of the string given by id.
@@ -130,6 +140,7 @@ export interface ImportObject {
   "zig-js": {
     valueGet: (ref: number, ptr: number, len: number) => number;
     valueDeinit: (id: number) => void;
+    valueStringCreate: (ptr: number, len: number) => number;
     valueStringLen: (id: number) => number;
   };
 };
