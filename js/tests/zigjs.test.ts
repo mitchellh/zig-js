@@ -70,6 +70,17 @@ test('valueGet: string', () => {
     expect(ref).not.toBeNaN();
     expect(ref).toEqual(6);
   }
+
+  // Copy the string into memory
+  const offset = 12;
+  {
+    const stringCopy = obj["zig-js"].valueStringCopy;
+    stringCopy(refToId(result), offset, 64);
+  }
+
+  // Read it
+  const str = new TextDecoder('utf-8').decode(new DataView(memory, 12, 6));
+  expect(str).toEqual("橋本");
 });
 
 test('valueSet: number', () => {

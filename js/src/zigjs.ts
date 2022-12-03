@@ -40,6 +40,7 @@ export class ZigJS {
         valueObjectCreate: this.valueObjectCreate.bind(this),
         valueStringCreate: this.valueStringCreate.bind(this),
         valueStringLen: this.valueStringLen.bind(this),
+        valueStringCopy: this.valueStringCopy.bind(this),
       },
     };
   }
@@ -99,6 +100,18 @@ export class ZigJS {
     const val = this.loadValue(id);
     const buf = encoder.encode(val);
     return buf.byteLength;
+  }
+
+  /**
+   * Copy the string at id "id" into the shared memory at ptr.
+   * */
+  protected valueStringCopy(id: number, ptr: number, max: number): void {
+    if (this.memory == null) return;
+
+    const val = this.loadValue(id);
+    const bytes = encoder.encode(val);
+    if (bytes.byteLength > max) return;
+    new Uint8Array(this.memory.buffer, ptr, bytes.length).set(bytes);
   }
 
   loadRef(ref: number): any {
@@ -169,6 +182,7 @@ export interface ImportObject {
     valueObjectCreate: () => number;
     valueStringCreate: (ptr: number, len: number) => number;
     valueStringLen: (id: number) => number;
+    valueStringCopy: (id: number, ptr: number, max: number) => void;
     valueDeinit: (id: number) => void;
   };
 };
