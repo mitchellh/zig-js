@@ -32,7 +32,13 @@ and JS environment. For Zig, vendor this repository and add the package.
 For example in your build.zig:
 
 ```
-TODO
+const js = @import("zig-js");
+
+pub fn build(b: *std.build.Builder) !void {
+  // ... other stuff
+
+  exe.addPackage(js.pkg);
+}
 ```
 
 From JS, install and import the package in the `js/` directory (in the future
@@ -80,7 +86,7 @@ uniquely identifies the value for future calls such as "give me the
 The ref itself is a 64-bit value. For numeric types, the ref _is_ the
 value. We take advantage of the fact that all numbers in JavaScript are
 IEEE 754 encoded 64-bit floats and use NaN as a way to send non-numeric values
-to Zig.
+to Zig (NaN-boxing).
 
 NaN in IEEE 754 encoding is `0111_1111_1111_<anything but all 0s>` in binary.
 We use a common NaN value of `0111_1111_1111_1000_0000...` so that we can use
@@ -89,3 +95,13 @@ a 32-bit ID.
 
 The 32-bit ID is just an index into an array on the JS side. A simple scheme
 is used to reuse IDs after they're dereferenced.
+
+## Performance
+
+Usage of this package causes the WASM/JS boundary to be crossed a LOT
+and this is generally not very fast and not an optimal way to use wasm.
+The optimal way to use WASM is more like a GPU: have the host (or wasm
+module) preload a bunch of work into a byte buffer and send it over
+in one single call. However, this approach is pretty painful.
+This packge makes interfacing with JS very, very easy. Consider the
+tradeoffs and choose what is best for you.

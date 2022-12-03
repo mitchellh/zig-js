@@ -20,8 +20,8 @@ pub const Type = enum {
 ///
 /// For a JS number (float64), the ref is literally the float64 (bitcasted).
 /// For other types, we utilize the unused bits of the IEEE 754 NaN
-/// representation to encode additional data into the ref. Bits 0-47
-/// are used as an ID and bits 48-51 are used as a type ID.
+/// representation to encode additional data into the ref. Bits 0-31
+/// are used as an ID and bits 32-34 are used as a type ID.
 pub const Ref = packed struct(u64) {
     id: u32 = 0,
     type_id: TypeId = .inferred,
