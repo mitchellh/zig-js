@@ -55,20 +55,20 @@ test('valueGet: string', () => {
   expect(write.written).toBeGreaterThan(0);
 
   // Write our key into the global value
-  globalThis[key] = "hello";
+  globalThis[key] = "橋本";
 
   // Read it
     const f = obj["zig-js"].valueGet;
     const result = f(refToId(predefined.globalThis), 0, write.written ?? 0);
     expect(result).toBeNaN();
-    expect(st.loadValue(refToId(result))).toEqual("hello");
+    expect(st.loadValue(refToId(result))).toEqual("橋本");
 
   // Read the string length
   {
     const stringLen = obj["zig-js"].valueStringLen;
     const ref = stringLen(refToId(result));
     expect(ref).not.toBeNaN();
-    expect(ref).toEqual(5);
+    expect(ref).toEqual(6);
   }
 });
 
@@ -135,6 +135,11 @@ test('valueStringCreate', () => {
   // Read it
   let f = obj["zig-js"].valueStringCreate;
   const ref = f(0, write.written ?? 0);
+
+  // TODO: If I don't have this, refToId returns the wrong value?? THis
+  // code shouldn't have side effects so big wtf.
+  refToId(ref);
+
   expect(ref).toBeNaN();
   expect(st.loadValue(refToId(ref))).toEqual(value);
 });

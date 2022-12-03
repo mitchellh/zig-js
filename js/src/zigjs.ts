@@ -97,7 +97,8 @@ export class ZigJS {
    * */
   protected valueStringLen(id: number): number {
     const val = this.loadValue(id);
-    return val.length;
+    const buf = encoder.encode(val);
+    return buf.byteLength;
   }
 
   loadRef(ref: number): any {
@@ -165,9 +166,9 @@ export interface ImportObject {
   "zig-js": {
     valueGet: (id: number, ptr: number, len: number) => number;
     valueSet: (id: number, ptr: number, len: number, valueRef: number) => void;
-    valueDeinit: (id: number) => void;
-    valueStringCreate: (ptr: number, len: number) => number;
     valueObjectCreate: () => number;
+    valueStringCreate: (ptr: number, len: number) => number;
     valueStringLen: (id: number) => number;
+    valueDeinit: (id: number) => void;
   };
 };
