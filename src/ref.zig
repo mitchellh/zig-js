@@ -4,7 +4,7 @@ const js = @import("main.zig");
 
 /// Possible types of values.
 pub const Type = enum {
-    invalid,
+    undefined,
     null,
     boolean,
     number,
@@ -32,7 +32,8 @@ pub const Ref = packed struct(u64) {
     pub const @"null": Ref = .{ .id = 1 };
     pub const @"true": Ref = .{ .id = 2 };
     pub const @"false": Ref = .{ .id = 3 };
-    pub const global: Ref = .{ .id = 4 };
+    pub const @"undefined": Ref = .{ .id = 4 };
+    pub const global: Ref = .{ .id = 5 };
 
     /// NaN in IEEE-754 is 0b0111_1111_1111_<anything other than all zeroes>.
     /// We always force NaN to have a 1-bit set in the 4th byte from the MSB
@@ -63,7 +64,8 @@ pub const Ref = packed struct(u64) {
                 0 => .number,
                 1 => .null,
                 2, 3 => .boolean,
-                4 => .object,
+                4 => .undefined,
+                5 => .object,
                 else => unreachable,
             },
         };

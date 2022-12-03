@@ -2,7 +2,7 @@
 // JS seems to use 7FF8. This lets us detect our own values.
 export const NAN_PREFIX = 0x7FFC_0000;
 
-export const PREDEFINED_ID_MAX = 4;
+export const PREDEFINED_ID_MAX = 5;
 
 /**
  * Predefined references.
@@ -12,7 +12,8 @@ export const predefined = {
   "null": idToRef(1),
   "true": idToRef(2),
   "false": idToRef(3),
-  "globalThis": idToRef(4),
+  "undefined": idToRef(4),
+  "globalThis": idToRef(5),
 };
 
 /**

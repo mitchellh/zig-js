@@ -17,7 +17,7 @@ export class ZigJS {
    * The values, indexed by ID (number). Duplicate values can be in this
    * if they are loaded multiple times. That just acts as duplicate references.
    * */
-  private values: Array<any> = [NaN, null, true, false, globalThis];
+  private values: Array<any> = [NaN, null, true, false, undefined, globalThis];
 
   /**
    * When a value is removed from the values array, its ID is put
@@ -136,7 +136,8 @@ export class ZigJS {
       return val;
     }
 
-    if (val === "null") return predefined.null;
+    if (val === null) return predefined.null;
+    if (val === undefined) return predefined.undefined;
 
     // Determine our ID
     let id = this.idPool.pop();

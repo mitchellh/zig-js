@@ -14,7 +14,8 @@ test('predefined values', () => {
   expect(st.loadValue(1)).toEqual(null);
   expect(st.loadValue(2)).toEqual(true);
   expect(st.loadValue(3)).toEqual(false);
-  expect(st.loadValue(4)).toEqual(globalThis);
+  expect(st.loadValue(4)).toEqual(undefined);
+  expect(st.loadValue(5)).toEqual(globalThis);
 });
 
 test('valueGet', () => {
