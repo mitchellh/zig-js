@@ -1,5 +1,4 @@
-// The prefix we use for all special NaN values. We use 7FFC because
-// JS seems to use 7FF8. This lets us detect our own values.
+// The prefix we use for all NaN values.
 const NAN_PREFIX = 0x7FF8_0000;
 
 /**

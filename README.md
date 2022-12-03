@@ -7,13 +7,18 @@ host.
 ## Example
 
 ```zig
+// Get and set objects and properties
 const document = try js.global.get(js.Object, "document");
 defer document.deinit();
 
 const title = try document.getAlloc(js.String, alloc, "title");
 defer alloc.free(title);
-
 std.log.info("the title is: {s}", .{str});
+
+try document.set("title", js.string("A new title."));
+
+// Call functions
+js.global.call(void, "alert", .{js.string("Hello from Zig!")});
 ```
 
 The code is a bit verbose with the error handling but since JS is a
