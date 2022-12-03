@@ -10,7 +10,51 @@ const ext = @import("extern.zig");
 /// This is NOT a JS string. This is just a sentinel type so that we can
 /// differentiate a slice and a "string" when trying to convert a Zig
 /// value into a JS value.
-pub const String = struct { ptr: [*]const u8, len: usize };
+pub const String = struct {
+    ptr: [*]const u8,
+    len: usize,
+
+    /// Initialize a string from one of the many string representations in Zig.
+    pub fn init(x: anytype) String {
+        switch (@typeInfo(@TypeOf(x))) {
+            .Pointer => |p| switch (p.size) {
+                .One => return .{
+                    .ptr = x,
+                    .len = @typeInfo(p.child).Array.len,
+                },
+
+                .Slice => {
+                    assert(p.child == u8);
+                    return .{ .ptr = x.ptr, .len = x.len };
+                },
+
+                else => {},
+            },
+
+            else => {},
+        }
+
+        const T = @TypeOf(x);
+        @compileLog(T, @typeInfo(T));
+        @compileError("unsupported type");
+    }
+
+    test "constant string" {
+        const testing = std.testing;
+        const raw = "hello!";
+        const v = init(raw);
+        try testing.expectEqual(@ptrCast([*]const u8, raw), v.ptr);
+        try testing.expectEqual(raw.len, v.len);
+    }
+
+    test "slice string" {
+        const testing = std.testing;
+        const raw = @as([]const u8, "hello!");
+        const v = init(raw);
+        try testing.expectEqual(@ptrCast([*]const u8, raw), v.ptr);
+        try testing.expectEqual(raw.len, v.len);
+    }
+};
 
 /// Only used with Value.init to denote an object type.
 pub const Object = struct {};
@@ -115,6 +159,10 @@ pub const Value = enum(u64) {
         return @bitCast(js.Ref, @enumToInt(self));
     }
 };
+
+test "String" {
+    _ = String;
+}
 
 test "Value.init: undefined" {
     const testing = std.testing;
