@@ -19,6 +19,8 @@
   "author": "Mitchell Hashimoto",
   "license": "MIT",
   "devDependencies": {
+    "@parcel/packager-ts": "^2.8.0",
+    "@parcel/transformer-typescript-types": "^2.8.0",
     "@types/jest": "^29.2.3",
     "jest": "^29.3.1",
     "parcel": "^2.8.0",

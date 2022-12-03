@@ -69,6 +69,11 @@ fetch('my-wasm-file.wasm').then(response =>
 });
 ```
 
+**WARNING:** The zig-js version used in your Zig code and JS code must match.
+I'm not promising any protocol stability right now so pin your versions
+appropriately. To determine what version is compatible, look up the tagged
+version in this repository and the corresponding commits.
+
 ## Internals
 
 The fundamental idea in this is based on the Go
