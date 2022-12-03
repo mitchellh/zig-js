@@ -1,5 +1,21 @@
-import { NAN_PREFIX, PREDEFINED_ID_MAX, predefined } from './ref';
+// The prefix we use for all special NaN values. We use 7FFC because
+// JS seems to use 7FF8. This lets us detect our own values.
+const NAN_PREFIX = 0x7FF8_0000;
 
+/**
+ * Predefined references.
+ * */
+export const predefined = {
+  "nan": 0,
+  "null": 1,
+  "true": 2,
+  "false": 3,
+  "undefined": 4,
+  "globalThis": 5,
+};
+const PREDEFINED_ID_MAX = 5;
+
+// Other globals we need
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8");
 
@@ -41,6 +57,7 @@ export class ZigJS {
         valueStringCreate: this.valueStringCreate.bind(this),
         valueStringLen: this.valueStringLen.bind(this),
         valueStringCopy: this.valueStringCopy.bind(this),
+        funcApply: this.funcApply.bind(this),
       },
     };
   }
@@ -111,6 +128,21 @@ export class ZigJS {
     const bytes = encoder.encode(val);
     if (bytes.byteLength > max) return;
     new Uint8Array(this.memory.buffer, ptr, bytes.length).set(bytes);
+  }
+
+  /**
+   * Call a function given by id.
+   * */
+  protected funcApply(out: number, id: number, thisRefAddr: number, argsAddr: number, argsLen: number): void {
+    const fn = this.loadValue(id);
+    const thisVal = this.loadRef(thisRefAddr);
+    const args = [];
+    for (let i = 0; i < argsLen; i++) {
+      args.push(this.loadRef(argsAddr + (i * 4)));
+    }
+
+    const result = Reflect.apply(fn, thisVal, args);
+    this.storeValue(out, result);
   }
 
   loadRef(refAddr: number): any {
@@ -207,5 +239,6 @@ export interface ImportObject {
     valueStringLen: (id: number) => number;
     valueStringCopy: (id: number, ptr: number, max: number) => void;
     valueDeinit: (id: number) => void;
+    funcApply: (out: number, funcId: number, thisRef: number, argsPtr: number, argsLen: number) => void;
   };
 };

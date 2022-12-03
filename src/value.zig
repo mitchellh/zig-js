@@ -138,6 +138,20 @@ pub const Value = enum(u64) {
         ext.valueSet(self.ref().id, n.ptr, n.len, &@bitCast(u64, v.ref()));
     }
 
+    /// Call this value as a function.
+    pub fn apply(self: Value, this: Value, args: []Value) !Value {
+        if (self.typeOf() != .function) return js.Error.InvalidType;
+        var result: u64 = undefined;
+        ext.funcApply(
+            &result,
+            self.ref().id,
+            &@bitCast(u64, this.ref()),
+            @ptrCast([*]const u64, args.ptr),
+            args.len,
+        );
+        return @intToEnum(Value, result);
+    }
+
     /// Returns the float value if this is a number.
     pub fn float(self: Value) !f64 {
         if (self.typeOf() != .number) return js.Error.InvalidType;

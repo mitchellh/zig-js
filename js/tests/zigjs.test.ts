@@ -1,5 +1,4 @@
-import { ZigJS } from '../src';
-import { predefined } from '../src/ref';
+import { ZigJS, predefined } from '../src';
 
 test('predefined values', () => {
   const st = new ZigJS();
@@ -173,9 +172,49 @@ test('valueObjectCreate', () => {
   expect(st.loadValue(st.loadRefId(refAddr))).toEqual({});
 });
 
+test('funcApply', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+
+  // Set our memory
+  const memory = new ArrayBuffer(128);
+  const view = new DataView(memory);
+  st.memory = view;
+
+  // Set our function
+  const key = "__zigjs_func";
+  globalThis[key] = (x: number): number => x * 2;
+
+  // Write our string
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Read the func
+  const funcAddr = 64;
+  const f = obj["zig-js"].valueGet;
+  f(funcAddr, predefined.globalThis, 0, write.written ?? 0);
+  expect(st.loadValue(st.loadRefId(funcAddr))).toBeInstanceOf(Function);
+
+  // Setup our args
+  view.setFloat64(0, 24, true);
+
+  // Call it!
+  const resultAddr = 0;
+  obj["zig-js"].funcApply(
+    resultAddr,
+    st.loadRefId(funcAddr),
+    predefined.undefined,
+    0,
+    1,
+  );
+  expect(st.loadRef(resultAddr)).toEqual(48);
+});
+
 // We need to extend our global value for test keys
 declare global {
   var __zigjs_boolean: boolean;
   var __zigjs_number: number;
   var __zigjs_string: string;
+  var __zigjs_func: any;
 }

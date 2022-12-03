@@ -13,6 +13,13 @@ pub usingnamespace if (!builtin.is_test) struct {
     pub extern "zig-js" fn valueStringLen(id: u64) u64;
     pub extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
     pub extern "zig-js" fn valueDeinit(id: u64) void;
+    pub extern "zig-js" fn funcApply(
+        out: *u64,
+        func: u64,
+        thisPtr: *const u64,
+        argsPtr: [*]const u64,
+        argsLen: usize,
+    ) void;
 } else struct {
     const alloc = std.testing.allocator;
 

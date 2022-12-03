@@ -1,1 +1,1 @@
-export { ZigJS } from './zigjs';
+export * from './zigjs';

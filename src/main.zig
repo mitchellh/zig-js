@@ -27,10 +27,8 @@ pub const Error = error{
     InvalidType,
 };
 
-/// The global object, i.e. "global" in the JS environment.
-pub fn global() value.Value {
-    return @intToEnum(value.Value, @bitCast(u64, ref.Ref.global));
-}
+/// The global "this" value.
+pub const global = value.Value.global;
 
 test {
     @import("std").testing.refAllDecls(@This());

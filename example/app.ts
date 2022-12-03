@@ -17,8 +17,10 @@ fetch(url.href).then(response =>
 ).then(bytes =>
   WebAssembly.instantiate(bytes, importObject)
 ).then(results => {
-  const { memory, set_title } = results.instance.exports;
+  const { memory, alert, set_title } = results.instance.exports;
   zjs.memory = new DataView(memory.buffer);
 
+  // Call whatever example you want:
   set_title();
+  //alert();
 });
