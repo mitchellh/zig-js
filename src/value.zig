@@ -139,8 +139,8 @@ pub const Value = enum(u64) {
     }
 
     /// Returns the float value if this is a number.
-    pub fn float(self: Value) f64 {
-        assert(self.typeOf() == .number);
+    pub fn float(self: Value) !f64 {
+        if (self.typeOf() != .number) return js.Error.InvalidType;
         return @bitCast(f64, @enumToInt(self));
     }
 
@@ -199,7 +199,7 @@ test "Value.init: floats" {
     {
         const v = Value.init(1.234);
         try testing.expectEqual(js.Type.number, v.typeOf());
-        try testing.expectEqual(@as(f64, 1.234), v.float());
+        try testing.expectEqual(@as(f64, 1.234), try v.float());
     }
 }
 
@@ -209,7 +209,7 @@ test "Value.init: ints" {
     {
         const v = Value.init(14);
         try testing.expectEqual(js.Type.number, v.typeOf());
-        try testing.expectEqual(@as(f64, 14), v.float());
+        try testing.expectEqual(@as(f64, 14), try v.float());
     }
 }
 
@@ -242,5 +242,5 @@ test "Value: objects" {
     try root.set("count", Value.init(42));
 
     const count = try root.get("count");
-    try testing.expectEqual(@as(f64, 42), count.float());
+    try testing.expectEqual(@as(f64, 42), try count.float());
 }
