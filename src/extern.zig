@@ -6,13 +6,13 @@ const js = @import("main.zig");
 // This is the API that must be provided by the host environment. For
 // testing we mock it out so that we can test a well-behaved system.
 pub usingnamespace if (!builtin.is_test) struct {
-    extern "zig-js" fn valueGet(id: u64, n: usize, len: usize) u64;
-    extern "zig-js" fn valueSet(id: u64, n: usize, len: usize, value: u64) void;
-    extern "zig-js" fn valueObjectCreate() u64;
-    extern "zig-js" fn valueStringCreate(addr: [*]const u8, len: u64) u64;
-    extern "zig-js" fn valueStringLen(id: u64) u64;
-    extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
-    extern "zig-js" fn valueDeinit(id: u64) void;
+    pub extern "zig-js" fn valueGet(id: u64, addr: [*]const u8, len: usize) u64;
+    pub extern "zig-js" fn valueSet(id: u64, addr: [*]const u8, len: usize, value: u64) void;
+    pub extern "zig-js" fn valueObjectCreate() u64;
+    pub extern "zig-js" fn valueStringCreate(addr: [*]const u8, len: u64) u64;
+    pub extern "zig-js" fn valueStringLen(id: u64) u64;
+    pub extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
+    pub extern "zig-js" fn valueDeinit(id: u64) void;
 } else struct {
     const alloc = std.testing.allocator;
 
