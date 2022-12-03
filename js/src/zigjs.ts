@@ -52,7 +52,8 @@ export class ZigJS {
     const val = this.loadValue(id);
     const str = this.loadString(ptr, len);
     const result = Reflect.get(val, str);
-    return this.storeValue(result);
+    const ref = this.storeValue(result);
+    return ref;
   }
 
   /**

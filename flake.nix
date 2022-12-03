@@ -37,6 +37,7 @@
           nativeBuildInputs = with pkgs; [
             zigpkgs.master
             nodejs
+            wabt
           ];
         };
 
