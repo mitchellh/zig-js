@@ -1,6 +1,6 @@
 {
   "name": "zig-js-glue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JS glue for Zig to interface with JS from Wasm",
   "repository": {
     "type": "git",
