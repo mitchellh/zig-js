@@ -102,8 +102,16 @@ pub const Value = enum(u64) {
 
             else => switch (@TypeOf(x)) {
                 Undefined => .undefined,
-                Object => @intToEnum(Value, ext.valueObjectCreate()),
-                String => @intToEnum(Value, ext.valueStringCreate(x.ptr, x.len)),
+                Object => blk: {
+                    var result: u64 = undefined;
+                    ext.valueObjectCreate(&result);
+                    break :blk @intToEnum(Value, result);
+                },
+                String => blk: {
+                    var result: u64 = undefined;
+                    ext.valueStringCreate(&result, x.ptr, x.len);
+                    break :blk @intToEnum(Value, result);
+                },
                 else => unreachable,
             },
         };
@@ -119,13 +127,15 @@ pub const Value = enum(u64) {
     /// Get the value of a property of an object.
     pub fn get(self: Value, n: []const u8) !Value {
         if (self.typeOf() != .object) return js.Error.InvalidType;
-        return @intToEnum(Value, ext.valueGet(self.ref().id, n.ptr, n.len));
+        var result: u64 = undefined;
+        ext.valueGet(&result, self.ref().id, n.ptr, n.len);
+        return @intToEnum(Value, result);
     }
 
     /// Set the value of a property on an object.
     pub fn set(self: Value, n: []const u8, v: Value) !void {
         if (self.typeOf() != .object) return js.Error.InvalidType;
-        ext.valueSet(self.ref().id, n.ptr, n.len, @bitCast(u64, v.ref()));
+        ext.valueSet(self.ref().id, n.ptr, n.len, &@bitCast(u64, v.ref()));
     }
 
     /// Returns the float value if this is a number.

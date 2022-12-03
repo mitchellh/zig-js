@@ -1,12 +1,5 @@
 import { ZigJS } from '../src';
-import { idToRef, refToId, predefined } from '../src/ref';
-
-test('ref conversion', () => {
-  const st = new ZigJS();
-  expect(idToRef(0)).toBeNaN();
-  expect(refToId(idToRef(0))).toEqual(0);
-  expect(refToId(idToRef(2))).toEqual(2);
-});
+import { predefined } from '../src/ref';
 
 test('predefined values', () => {
   const st = new ZigJS();
@@ -25,7 +18,8 @@ test('valueGet', () => {
 
   // Set our memory
   const memory = new ArrayBuffer(128);
-  st.memory = new DataView(memory);
+  const view = new DataView(memory);
+  st.memory = view;
 
   // Write our string
   const key = "__zigjs_number";
@@ -37,8 +31,8 @@ test('valueGet', () => {
   globalThis[key] = 1234;
 
   // Read it
-  const result = f(refToId(predefined.globalThis), 0, write.written ?? 0);
-  expect(result).toEqual(1234);
+  f(64, predefined.globalThis, 0, write.written ?? 0);
+  expect(view.getFloat64(64, true)).toEqual(1234);
 });
 
 test('valueGet: string', () => {
@@ -47,7 +41,8 @@ test('valueGet: string', () => {
 
   // Set our memory
   const memory = new ArrayBuffer(128);
-  st.memory = new DataView(memory);
+  const view = new DataView(memory);
+  st.memory = view;
 
   // Write our string
   const key = "__zigjs_string";
@@ -59,24 +54,24 @@ test('valueGet: string', () => {
   globalThis[key] = "橋本";
 
   // Read it
-    const f = obj["zig-js"].valueGet;
-    const result = f(refToId(predefined.globalThis), 0, write.written ?? 0);
-    expect(result).toBeNaN();
-    expect(st.loadValue(refToId(result))).toEqual("橋本");
+  const refAddr = 64;
+  const f = obj["zig-js"].valueGet;
+  f(refAddr, predefined.globalThis, 0, write.written ?? 0);
+  expect(st.loadRef(refAddr)).toEqual("橋本");
 
   // Read the string length
   {
     const stringLen = obj["zig-js"].valueStringLen;
-    const ref = stringLen(refToId(result));
-    expect(ref).not.toBeNaN();
-    expect(ref).toEqual(6);
+    const len = stringLen(st.loadRefId(refAddr));
+    expect(len).not.toBeNaN();
+    expect(len).toEqual(6);
   }
 
   // Copy the string into memory
   const offset = 12;
   {
     const stringCopy = obj["zig-js"].valueStringCopy;
-    stringCopy(refToId(result), offset, 64);
+    stringCopy(st.loadRefId(refAddr), offset, 64);
   }
 
   // Read it
@@ -91,7 +86,8 @@ test('valueSet: number', () => {
 
   // Set our memory
   const memory = new ArrayBuffer(128);
-  st.memory = new DataView(memory);
+  const view = new DataView(memory);
+  st.memory = view;
 
   // Write our string
   const key = "__zigjs_number";
@@ -99,11 +95,15 @@ test('valueSet: number', () => {
   const write = encoder.encodeInto(key, new Uint8Array(memory));
   expect(write.written).toBeGreaterThan(0);
 
+  // Write our argument
+  const refAddr = 64;
+  view.setFloat64(refAddr, 42, true);
+
   // Write our key into the global value
   globalThis[key] = 12;
 
   // Set it
-  f(refToId(predefined.globalThis), 0, write.written ?? 0, 42);
+  f(predefined.globalThis, 0, write.written ?? 0, refAddr);
   expect(globalThis[key]).toEqual(42);
 });
 
@@ -114,7 +114,8 @@ test('valueSet: ref', () => {
 
   // Set our memory
   const memory = new ArrayBuffer(128);
-  st.memory = new DataView(memory);
+  const view = new DataView(memory);
+  st.memory = view;
 
   // Write our string
   const key = "__zigjs_boolean";
@@ -122,11 +123,15 @@ test('valueSet: ref', () => {
   const write = encoder.encodeInto(key, new Uint8Array(memory));
   expect(write.written).toBeGreaterThan(0);
 
+  // Write our argument
+  const refAddr = 64;
+  st.storeValue(refAddr, true);
+
   // Write our key into the global value
   globalThis[key] = false;
 
   // Set it
-  f(refToId(predefined.globalThis), 0, write.written ?? 0, predefined.true);
+  f(predefined.globalThis, 0, write.written ?? 0, refAddr);
   expect(globalThis[key]).toEqual(true);
 });
 
@@ -136,7 +141,8 @@ test('valueStringCreate', () => {
 
   // Set our memory
   const memory = new ArrayBuffer(128);
-  st.memory = new DataView(memory);
+  const view = new DataView(memory);
+  st.memory = view;
 
   // Write our string into memory
   const value = "hello, world!";
@@ -146,23 +152,26 @@ test('valueStringCreate', () => {
 
   // Read it
   let f = obj["zig-js"].valueStringCreate;
-  const ref = f(0, write.written ?? 0);
-
-  expect(ref).toBeNaN();
-  expect(st.loadValue(refToId(ref))).toEqual(value);
+  const refAddr = 64;
+  f(refAddr, 0, write.written ?? 0);
+  expect(st.loadValue(st.loadRefId(refAddr))).toEqual(value);
 });
 
 test('valueObjectCreate', () => {
   const st = new ZigJS();
   const obj = st.importObject();
 
+  // Set our memory
+  const memory = new ArrayBuffer(128);
+  const view = new DataView(memory);
+  st.memory = view;
+
   // Read it
   let f = obj["zig-js"].valueObjectCreate;
-  const ref = f();
-  expect(ref).toBeNaN();
-  expect(st.loadValue(refToId(ref))).toEqual({});
+  const refAddr = 64;
+  f(refAddr);
+  expect(st.loadValue(st.loadRefId(refAddr))).toEqual({});
 });
-
 
 // We need to extend our global value for test keys
 declare global {

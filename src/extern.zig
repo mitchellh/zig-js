@@ -6,10 +6,10 @@ const js = @import("main.zig");
 // This is the API that must be provided by the host environment. For
 // testing we mock it out so that we can test a well-behaved system.
 pub usingnamespace if (!builtin.is_test) struct {
-    pub extern "zig-js" fn valueGet(id: u64, addr: [*]const u8, len: usize) u64;
-    pub extern "zig-js" fn valueSet(id: u64, addr: [*]const u8, len: usize, value: u64) void;
-    pub extern "zig-js" fn valueObjectCreate() u64;
-    pub extern "zig-js" fn valueStringCreate(addr: [*]const u8, len: u64) u64;
+    pub extern "zig-js" fn valueGet(out: *u64, id: u64, addr: [*]const u8, len: usize) void;
+    pub extern "zig-js" fn valueSet(id: u64, addr: [*]const u8, len: usize, refPtr: *const u64) void;
+    pub extern "zig-js" fn valueObjectCreate(out: *u64) void;
+    pub extern "zig-js" fn valueStringCreate(out: *u64, addr: [*]const u8, len: u64) void;
     pub extern "zig-js" fn valueStringLen(id: u64) u64;
     pub extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
     pub extern "zig-js" fn valueDeinit(id: u64) void;
@@ -52,25 +52,25 @@ pub usingnamespace if (!builtin.is_test) struct {
         values = .{};
     }
 
-    pub fn valueGet(id: u64, addr: [*]const u8, len: u64) u64 {
+    pub fn valueGet(out: *u64, id: u64, addr: [*]const u8, len: u64) void {
         const obj = &values.items[id].object;
         const key = addr[0..len];
-        return obj.get(key) orelse @bitCast(u64, js.Ref.null);
+        out.* = obj.get(key) orelse @bitCast(u64, js.Ref.null);
     }
 
-    pub fn valueSet(id: u64, addr: [*]const u8, len: u64, value: u64) void {
+    pub fn valueSet(id: u64, addr: [*]const u8, len: u64, ref_ptr: *const u64) void {
         const obj = &values.items[id].object;
         const key = alloc.dupe(u8, addr[0..len]) catch unreachable;
-        obj.put(alloc, key, value) catch unreachable;
+        obj.put(alloc, key, ref_ptr.*) catch unreachable;
     }
 
-    pub fn valueObjectCreate() u64 {
+    pub fn valueObjectCreate(out: *u64) void {
         values.append(alloc, .{ .object = .{} }) catch unreachable;
         const ref: js.Ref = .{ .type_id = .object, .id = @intCast(u32, values.items.len - 1) };
-        return @bitCast(u64, ref);
+        out.* = @bitCast(u64, ref);
     }
 
-    pub fn valueStringCreate(addr: [*]const u8, len: u64) u64 {
+    pub fn valueStringCreate(out: *u64, addr: [*]const u8, len: u64) void {
         // Copy the value
         const copy = alloc.dupe(u8, addr[0..len]) catch unreachable;
 
@@ -79,7 +79,7 @@ pub usingnamespace if (!builtin.is_test) struct {
 
         // Create the ref
         const ref: js.Ref = .{ .type_id = .string, .id = @intCast(u32, values.items.len - 1) };
-        return @bitCast(u64, ref);
+        out.* = @bitCast(u64, ref);
     }
 
     pub fn valueStringLen(id: u64) u64 {
