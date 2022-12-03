@@ -8,8 +8,8 @@ fn set_title_() !void {
     const doc = try js.global().get("document");
     defer doc.deinit();
 
-    // const v = js.Value.init(js.String.init("Hello!"));
-    // defer v.deinit();
-    //
-    // try doc.set("title", v);
+    const v = js.Value.init(js.String.init("Hello!"));
+    defer v.deinit();
+
+    try doc.set("title", v);
 }

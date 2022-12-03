@@ -193,7 +193,8 @@ export class ZigJS {
 
   loadString(ptr: number, len: number): string {
     if (this.memory == null) return "";
-    return decoder.decode(new DataView(this.memory.buffer, ptr, len));
+    const view = new DataView(this.memory.buffer, ptr, Number(len));
+    return decoder.decode(view);
   }
 }
 
