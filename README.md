@@ -46,7 +46,7 @@ this will be published to npm). A TypeScript example is shown below but
 JS could just as easily be used:
 
 ```typescript
-import { ZigJS } from 'zig-js';
+import { ZigJS } from 'zig-js-glue';
 
 // Initialize the stateful zigjs class. You should use one per wasm instance.
 const zigjs = new ZigJS();
