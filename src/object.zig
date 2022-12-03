@@ -42,13 +42,67 @@ pub const Object = struct {
         alloc: Allocator,
         n: []const u8,
     ) !Get(T).result {
+        const v = try self.value.get(n);
+        errdefer v.deinit();
+        return convertValue(T, alloc, v);
+    }
+
+    /// Set a value of a property. The type of v must be able to turn
+    /// into a value (see Value.init).
+    pub fn set(self: Object, n: []const u8, v: anytype) !void {
+        const T = @TypeOf(v);
+        const js_value = js.Value.init(v);
+        defer if (T != js.Value) js_value.deinit();
+        try self.value.set(n, js_value);
+    }
+
+    /// Call a function on a object. This will set the "this" parameter
+    /// to the object properly. This should only be used with return types
+    /// that don't need any allocations.
+    pub fn call(
+        self: Object,
+        comptime T: type,
+        n: []const u8,
+        args: anytype,
+    ) !Get(T).result {
+        const info = Get(T);
+        if (info.allocs) @compileError("use callAlloc for types that require allocations");
+        return self.callAlloc(T, undefined, n, args);
+    }
+
+    /// Call a function on an object where the return type requires allocation.
+    pub fn callAlloc(
+        self: Object,
+        comptime T: type,
+        alloc: Allocator,
+        n: []const u8,
+        args: anytype,
+    ) !Get(T).result {
+        // Build our arguments.
+        const argsInfo = @typeInfo(@TypeOf(args)).Struct;
+        assert(argsInfo.is_tuple);
+        var js_args: [argsInfo.fields.len]js.Value = undefined;
+        inline for (argsInfo.fields) |field, i| {
+            js_args[i] = switch (field.field_type) {
+                js.Object => @field(args, field.name),
+                else => js.Value.init(@field(args, field.name)),
+            };
+        }
+
+        // Invoke
+        const f = try self.value.get(n);
+        defer f.deinit();
+        const v = try f.apply(self.value, &js_args);
+        errdefer v.deinit();
+        return try convertValue(T, alloc, v);
+    }
+
+    fn convertValue(comptime T: type, alloc: Allocator, v: js.Value) !Get(T).result {
         const info = Get(T);
         const optional = @typeInfo(T) == .Optional;
 
         // Get the value no matter what type it is.
-        const v = try self.value.get(n);
         defer if (!info.retains) v.deinit();
-        errdefer v.deinit();
 
         // If the return type is optional, then handle null/undefined
         const vt = v.typeOf();
@@ -76,15 +130,6 @@ pub const Object = struct {
         return js.Error.InvalidType;
     }
 
-    /// Set a value of a property. The type of v must be able to turn
-    /// into a value (see Value.init).
-    pub fn set(self: Object, n: []const u8, v: anytype) !void {
-        const T = @TypeOf(v);
-        const js_value = js.Value.init(v);
-        defer if (T != js.Value) js_value.deinit();
-        try self.value.set(n, js_value);
-    }
-
     /// Information about our result type based on get calls.
     const GetInfo = struct {
         /// The result type for this get.
@@ -106,6 +151,7 @@ pub const Object = struct {
         };
 
         return switch (T) {
+            void => .{ .result = void },
             Object => .{ .result = Object, .retains = true },
             js.String => .{ .result = []u8, .allocs = true },
             js.Value => .{ .result = js.Value, .retains = true },

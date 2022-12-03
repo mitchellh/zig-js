@@ -16,11 +16,5 @@ fn set_title_() !void {
 }
 
 fn alert_() !void {
-    const alert_fn = try js.Value.global.get("alert");
-    defer alert_fn.deinit();
-
-    const msg = js.Value.init(js.String.init("Hello, world!"));
-    defer msg.deinit();
-
-    _ = try alert_fn.apply(.undefined, &[_]js.Value{msg});
+    try js.global.call(void, "alert", .{js.string("Hello, world!")});
 }

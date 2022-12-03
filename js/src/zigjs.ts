@@ -219,7 +219,7 @@ export class ZigJS {
     }
 
     // Set the fields
-    this.memory.setUint32(out, id, true);
+    this.memory.setUint32(out, Number(id), true);
     this.memory.setUint32(out + 4, NAN_PREFIX | typeId, true);
   }
 
