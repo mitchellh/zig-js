@@ -15,6 +15,9 @@ pub const String = struct { ptr: [*]const u8, len: usize };
 /// Only used with Value.init to denote an object type.
 pub const Object = struct {};
 
+/// Only used with Value.init to denote an undefined type.
+pub const Undefined = struct {};
+
 /// A value represents a JS value. This is the low-level "untyped" interface
 /// to any generic JS value. It is more ergonomic to use the higher level
 /// wrappers such as Object.
@@ -24,6 +27,7 @@ pub const Value = enum(u64) {
     null = @bitCast(u64, js.Ref.@"null"),
     true = @bitCast(u64, js.Ref.@"true"),
     false = @bitCast(u64, js.Ref.@"false"),
+    undefined = @bitCast(u64, js.Ref.@"undefined"),
     global = @bitCast(u64, js.Ref.global),
 
     _,
@@ -53,6 +57,7 @@ pub const Value = enum(u64) {
             .Int => init(@intToFloat(f64, x)),
 
             else => switch (@TypeOf(x)) {
+                Undefined => .undefined,
                 Object => @intToEnum(Value, ext.valueObjectCreate()),
                 String => @intToEnum(Value, ext.valueStringCreate(x.ptr, x.len)),
                 else => unreachable,
@@ -110,6 +115,11 @@ pub const Value = enum(u64) {
         return @bitCast(js.Ref, @enumToInt(self));
     }
 };
+
+test "Value.init: undefined" {
+    const testing = std.testing;
+    try testing.expectEqual(Value.undefined, Value.init(Undefined{}));
+}
 
 test "Value.init: null" {
     const testing = std.testing;
