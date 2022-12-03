@@ -7,13 +7,12 @@ host.
 ## Example
 
 ```zig
-const document = try js.global().get("document");
+const document = try js.global.get(js.Object, "document");
 defer document.deinit();
 
-const title = try document.get("title");
-defer title.deinit();
+const title = try document.getAlloc(js.String, alloc, "title");
+defer alloc.free(title);
 
-const str = try title.string(alloc)
 std.log.info("the title is: {s}", .{str});
 ```
 

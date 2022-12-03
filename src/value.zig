@@ -56,9 +56,6 @@ pub const String = struct {
     }
 };
 
-/// Only used with Value.init to denote an object type.
-pub const Object = struct {};
-
 /// Only used with Value.init to denote an undefined type.
 pub const Undefined = struct {};
 
@@ -102,7 +99,8 @@ pub const Value = enum(u64) {
 
             else => switch (@TypeOf(x)) {
                 Undefined => .undefined,
-                Object => blk: {
+                js.Value => x,
+                js.Object => blk: {
                     var result: u64 = undefined;
                     ext.valueObjectCreate(&result);
                     break :blk @intToEnum(Value, result);
@@ -152,6 +150,12 @@ pub const Value = enum(u64) {
         return @intToEnum(Value, result);
     }
 
+    /// Returns the bool value if this is a boolean.
+    pub fn boolean(self: Value) !f64 {
+        if (self.typeOf() != .boolean) return js.Error.InvalidType;
+        return self == .true;
+    }
+
     /// Returns the float value if this is a number.
     pub fn float(self: Value) !f64 {
         if (self.typeOf() != .number) return js.Error.InvalidType;
@@ -160,7 +164,7 @@ pub const Value = enum(u64) {
 
     /// Returns the UTF-8 encoded string value. The resulting value must be
     /// freed by the caller.
-    pub fn string(self: Value, alloc: Allocator) ![]const u8 {
+    pub fn string(self: Value, alloc: Allocator) ![]u8 {
         if (self.typeOf() != .string) return js.Error.InvalidType;
 
         // Get the length and allocate our pointer
@@ -249,7 +253,7 @@ test "Value: objects" {
     //const alloc = testing.allocator;
     defer ext.deinit();
 
-    const root = Value.init(Object{});
+    const root = Value.init(js.Object{ .value = undefined });
     defer root.deinit();
     try testing.expectEqual(js.Type.object, root.typeOf());
 

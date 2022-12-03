@@ -9,17 +9,14 @@ export fn alert() void {
 }
 
 fn set_title_() !void {
-    const doc = try js.global.get("document");
+    const doc = try js.global.get(js.Object, "document");
     defer doc.deinit();
 
-    const v = js.Value.init(js.String.init("Hello!"));
-    defer v.deinit();
-
-    try doc.set("title", v);
+    try doc.set("title", js.string("Hello!"));
 }
 
 fn alert_() !void {
-    const alert_fn = try js.global.get("alert");
+    const alert_fn = try js.Value.global.get("alert");
     defer alert_fn.deinit();
 
     const msg = js.Value.init(js.String.init("Hello, world!"));
