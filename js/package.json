@@ -2,11 +2,16 @@
   "name": "zig-js",
   "version": "0.1.0",
   "description": "JS glue for Zig to interface with JS from Wasm",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mitchellh/zig-js.git"
+  },
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/module.js",
   "types": "dist/types.d.ts",
   "scripts": {
+    "prepare": "parcel build",
     "build": "parcel build",
     "test": "jest",
     "check": "tsc --noEmit"
