@@ -124,11 +124,6 @@ test('valueSet: ref', () => {
   // Write our key into the global value
   globalThis[key] = false;
 
-  // TODO: If I don't have this, refToId returns the wrong value?? THis
-  // code shouldn't have side effects so big wtf.
-  refToId(predefined.globalThis);
-  refToId(predefined.globalThis);
-
   // Set it
   f(refToId(predefined.globalThis), 0, write.written ?? 0, predefined.true);
   expect(globalThis[key]).toEqual(true);
