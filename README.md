@@ -35,7 +35,7 @@ To use this library, you must integrate a component in both the Zig
 and JS environment. For Zig, vendor this repository and add the package.
 For example in your build.zig:
 
-```
+```zig
 const js = @import("zig-js");
 
 pub fn build(b: *std.build.Builder) !void {
