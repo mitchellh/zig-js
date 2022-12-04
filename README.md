@@ -4,6 +4,10 @@ zig-js is a Zig library (and accompanying JS glue) that enables Zig
 running in a WebAssembly environment to interact with a JavaScript-based
 host.
 
+Note this makes it particularly easy for Zig to call into JS. This
+doesn't help for JS calling into Zig. This is more akin to Go's
+`syscall/js` package and not like Rust's `wasm-bindgen`.
+
 ## Example
 
 ```zig
