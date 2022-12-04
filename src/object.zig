@@ -89,6 +89,12 @@ pub const Object = struct {
             };
         }
 
+        // We need to free all the arguments given to use that weren't
+        // already js.Objects. If they were, its up to the caller to free.
+        defer inline for (argsInfo.fields) |field, i| {
+            if (field.field_type != js.Object) js_args[i].deinit();
+        };
+
         // Invoke
         const f = try self.value.get(n);
         defer f.deinit();
