@@ -25,8 +25,12 @@ export class ZigJS {
   /**
    * Set this to the memory of your WebAssembly instance prior to making
    * any Wasm calls that might interface with JS.
+   *
+   * We have to use a Memory object directly (rather than an ArrayBuffer)
+   * so that we can always access memory even if it is resized. Otherwise,
+   * a resize could detach the array buffer.
    * */
-  memory?: DataView;
+  memory?: WebAssembly.Memory;
 
   /**
    * The values, indexed by ID (number). Duplicate values can be in this
@@ -146,9 +150,10 @@ export class ZigJS {
 
   loadRef(refAddr: number): any {
     if (this.memory == null) return;
+    const view = new DataView(this.memory.buffer);
 
     // If the value at the memory location is not a NaN, return it directly.
-    const floatVal = this.memory.getFloat64(refAddr, true);
+    const floatVal = view.getFloat64(refAddr, true);
     if (!isNaN(floatVal)) return floatVal;
 
     // If it is a NaN, we need to get the ID.
@@ -158,7 +163,7 @@ export class ZigJS {
 
   loadRefId(refAddr: number): number {
     if (this.memory == null) return 0;
-    return this.memory.getUint32(refAddr, true);
+    return new DataView(this.memory.buffer).getUint32(refAddr, true);
   }
 
   loadValue(id: number): any {
@@ -167,29 +172,30 @@ export class ZigJS {
 
   storeValue(out: number, val: any): void {
     if (this.memory == null) return;
+    const view = new DataView(this.memory.buffer);
 
     if (typeof val === "number") {
       // We have to turn NaNs into a single value (since NaN can be
       // represented by multiple encodings).
       if (isNaN(val)) {
-        this.memory.setUint32(out, predefined.nan, true);
-        this.memory.setUint32(out + 4, NAN_PREFIX, true);
+        view.setUint32(out, predefined.nan, true);
+        view.setUint32(out + 4, NAN_PREFIX, true);
       } else {
-        this.memory.setFloat64(out, val, true);
+        view.setFloat64(out, val, true);
       }
 
       return;
     }
 
     if (val === null) {
-      this.memory.setUint32(out, predefined.null, true);
-      this.memory.setUint32(out + 4, NAN_PREFIX, true);
+      view.setUint32(out, predefined.null, true);
+      view.setUint32(out + 4, NAN_PREFIX, true);
       return;
     }
 
     if (val === undefined) {
-      this.memory.setUint32(out, predefined.undefined, true);
-      this.memory.setUint32(out + 4, NAN_PREFIX, true);
+      view.setUint32(out, predefined.undefined, true);
+      view.setUint32(out + 4, NAN_PREFIX, true);
       return;
     }
 
@@ -218,8 +224,8 @@ export class ZigJS {
     }
 
     // Set the fields
-    this.memory.setUint32(out, Number(id), true);
-    this.memory.setUint32(out + 4, NAN_PREFIX | typeId, true);
+    view.setUint32(out, Number(id), true);
+    view.setUint32(out + 4, NAN_PREFIX | typeId, true);
   }
 
   loadString(ptr: number, len: number): string {

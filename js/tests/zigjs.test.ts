@@ -16,14 +16,14 @@ test('valueGet', () => {
   const f = obj["zig-js"].valueGet;
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Write our string
   const key = "__zigjs_number";
   const encoder = new TextEncoder();
-  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
   expect(write.written).toBeGreaterThan(0);
 
   // Write our key into the global value
@@ -39,14 +39,14 @@ test('valueGet: string', () => {
   const obj = st.importObject();
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Write our string
   const key = "__zigjs_string";
   const encoder = new TextEncoder();
-  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
   expect(write.written).toBeGreaterThan(0);
 
   // Write our key into the global value
@@ -74,7 +74,7 @@ test('valueGet: string', () => {
   }
 
   // Read it
-  const str = new TextDecoder('utf-8').decode(new DataView(memory, 12, 6));
+  const str = new TextDecoder('utf-8').decode(new DataView(memory.buffer, 12, 6));
   expect(str).toEqual("橋本");
 });
 
@@ -84,14 +84,14 @@ test('valueSet: number', () => {
   const f = obj["zig-js"].valueSet;
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Write our string
   const key = "__zigjs_number";
   const encoder = new TextEncoder();
-  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
   expect(write.written).toBeGreaterThan(0);
 
   // Write our argument
@@ -112,14 +112,14 @@ test('valueSet: ref', () => {
   const f = obj["zig-js"].valueSet;
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Write our string
   const key = "__zigjs_boolean";
   const encoder = new TextEncoder();
-  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
   expect(write.written).toBeGreaterThan(0);
 
   // Write our argument
@@ -139,14 +139,14 @@ test('valueStringCreate', () => {
   const obj = st.importObject();
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Write our string into memory
   const value = "hello, world!";
   const encoder = new TextEncoder();
-  const write = encoder.encodeInto(value, new Uint8Array(memory));
+  const write = encoder.encodeInto(value, new Uint8Array(memory.buffer));
   expect(write.written).toBeGreaterThan(0);
 
   // Read it
@@ -161,9 +161,9 @@ test('valueObjectCreate', () => {
   const obj = st.importObject();
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Read it
   let f = obj["zig-js"].valueObjectCreate;
@@ -177,9 +177,9 @@ test('funcApply', () => {
   const obj = st.importObject();
 
   // Set our memory
-  const memory = new ArrayBuffer(128);
-  const view = new DataView(memory);
-  st.memory = view;
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
 
   // Set our function
   const key = "__zigjs_func";
@@ -187,7 +187,7 @@ test('funcApply', () => {
 
   // Write our string
   const encoder = new TextEncoder();
-  const write = encoder.encodeInto(key, new Uint8Array(memory));
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
   expect(write.written).toBeGreaterThan(0);
 
   // Read the func
