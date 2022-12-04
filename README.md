@@ -70,7 +70,7 @@ fetch('my-wasm-file.wasm').then(response =>
   const { memory, my_func } = results.instance.exports;
 
   // Set the memory since zigjs interfaces with memory.
-  zigjs.memory = new DataView(memory.buffer);
+  zigjs.memory = memory;
 
   // Run any of your exported functions!
   my_func();
