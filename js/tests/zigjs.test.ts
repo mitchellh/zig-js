@@ -193,6 +193,44 @@ test('valueObjectCreate', () => {
   expect(st.loadValue(st.loadRefId(refAddr))).toEqual({});
 });
 
+test('valueNew', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+
+  // Set our memory
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
+
+  // Set our function
+  const key = "Uint8Array";
+
+  // Write our string
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Construct
+  const funcAddr = 64;
+  const f = obj["zig-js"].valueGet;
+  f(funcAddr, predefined.globalThis, 0, write.written ?? 0);
+
+  // Setup our args
+  view.setFloat64(0, 24, true);
+
+  // Call it!
+  const resultAddr = 0;
+  obj["zig-js"].valueNew(
+    resultAddr,
+    st.loadRefId(funcAddr),
+    0,
+    1,
+  );
+
+  const arr = st.loadRef(resultAddr);
+  expect(arr.length).toEqual(24);
+});
+
 test('funcApply', () => {
   const st = new ZigJS();
   const obj = st.importObject();

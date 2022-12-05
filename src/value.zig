@@ -154,6 +154,19 @@ pub const Value = enum(u64) {
         return @intToEnum(Value, result);
     }
 
+    /// Call "new" on this value like a constructor.
+    pub fn new(self: Value, args: []Value) !Value {
+        if (self.typeOf() != .function) return js.Error.InvalidType;
+        var result: u64 = undefined;
+        ext.valueNew(
+            &result,
+            self.ref().id,
+            @ptrCast([*]const u64, args.ptr),
+            args.len,
+        );
+        return @intToEnum(Value, result);
+    }
+
     /// Returns the bool value if this is a boolean.
     pub fn boolean(self: Value) !f64 {
         if (self.typeOf() != .boolean) return js.Error.InvalidType;

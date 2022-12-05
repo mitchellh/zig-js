@@ -13,6 +13,7 @@ pub usingnamespace if (!builtin.is_test) struct {
     pub extern "zig-js" fn valueStringLen(id: u32) u32;
     pub extern "zig-js" fn valueStringCopy(id: u32, addr: [*]u8, max: usize) void;
     pub extern "zig-js" fn valueDeinit(id: u32) void;
+    pub extern "zig-js" fn valueNew(out: *u64, id: u32, argsPtr: [*]const u64, argsLen: usize) void;
     pub extern "zig-js" fn funcApply(
         out: *u64,
         func: u32,
@@ -99,6 +100,18 @@ pub usingnamespace if (!builtin.is_test) struct {
 
     pub fn valueDeinit(id: u32) void {
         values.items[id].deinit();
+    }
+
+    pub fn valueNew(
+        out: *u64,
+        id: u32,
+        argsPtr: [*]const u64,
+        argsLen: usize,
+    ) void {
+        _ = out;
+        _ = id;
+        _ = argsPtr;
+        _ = argsLen;
     }
 
     pub fn funcApply(

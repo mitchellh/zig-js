@@ -61,6 +61,7 @@ export class ZigJS {
         valueStringCreate: this.valueStringCreate.bind(this),
         valueStringLen: this.valueStringLen.bind(this),
         valueStringCopy: this.valueStringCopy.bind(this),
+        valueNew: this.valueNew.bind(this),
         funcApply: this.funcApply.bind(this),
       },
     };
@@ -132,6 +133,20 @@ export class ZigJS {
     const bytes = encoder.encode(val);
     if (bytes.byteLength > max) return;
     new Uint8Array(this.memory.buffer, ptr, bytes.length).set(bytes);
+  }
+
+  /**
+   * Call a constructor given by id.
+   * */
+  protected valueNew(out: number, id: number, argsAddr: number, argsLen: number): void {
+    const fn = this.loadValue(id);
+    const args = [];
+    for (let i = 0; i < argsLen; i++) {
+      args.push(this.loadRef(argsAddr + (i * 8)));
+    }
+
+    const result = Reflect.construct(fn, args);
+    this.storeValue(out, result);
   }
 
   /**
@@ -245,6 +260,7 @@ export interface ImportObject {
     valueStringLen: (id: number) => number;
     valueStringCopy: (id: number, ptr: number, max: number) => void;
     valueDeinit: (id: number) => void;
+    valueNew: (out: number, funcId: number, argsPtr: number, argsLen: number) => void;
     funcApply: (out: number, funcId: number, thisRef: number, argsPtr: number, argsLen: number) => void;
   };
 };
