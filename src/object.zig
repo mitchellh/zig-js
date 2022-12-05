@@ -128,7 +128,7 @@ pub const Object = struct {
 
             bool => return try v.boolean(),
             []u8 => return try v.string(alloc),
-            f16, f32, f64 => return try v.float(),
+            f16, f32, f64 => return @floatCast(info.result, try v.float()),
 
             else => {},
         }
