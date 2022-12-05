@@ -34,6 +34,27 @@ test('valueGet', () => {
   expect(view.getFloat64(64, true)).toEqual(1234);
 });
 
+test('valueGet: runtime', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+  const f = obj["zig-js"].valueGet;
+
+  // Set our memory
+  const memory = new WebAssembly.Memory({ initial: 1 });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
+
+  // Write our string
+  const key = "memory";
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Read it
+  f(64, predefined.runtime, 0, write.written ?? 0);
+  expect(st.loadValue(st.loadRefId(64))).toEqual(memory);
+});
+
 test('valueGet: string', () => {
   const st = new ZigJS();
   const obj = st.importObject();

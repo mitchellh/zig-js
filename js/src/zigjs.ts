@@ -11,8 +11,9 @@ export const predefined = {
   "false": 3,
   "undefined": 4,
   "globalThis": 5,
+  "runtime": 6,
 };
-const PREDEFINED_ID_MAX = 5;
+const PREDEFINED_ID_MAX = 6;
 
 // Other globals we need
 const encoder = new TextEncoder();
@@ -36,7 +37,7 @@ export class ZigJS {
    * The values, indexed by ID (number). Duplicate values can be in this
    * if they are loaded multiple times. That just acts as duplicate references.
    * */
-  private values: Array<any> = [NaN, null, true, false, undefined, globalThis];
+  private values: Array<any> = [NaN, null, true, false, undefined, globalThis, this];
 
   /**
    * When a value is removed from the values array, its ID is put

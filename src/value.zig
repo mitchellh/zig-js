@@ -63,13 +63,17 @@ pub const Undefined = struct {};
 /// to any generic JS value. It is more ergonomic to use the higher level
 /// wrappers such as Object.
 pub const Value = enum(u64) {
-    // Predefined values
+    // Predefined values, they're all self-explanatory except maybe for
+    // "runtime". The "runtime" value gives access to the "this" value
+    // for the ZigJS JS class. This makes it possible to access the memory
+    // for example.
     nan = @bitCast(u64, js.Ref.nan),
     null = @bitCast(u64, js.Ref.@"null"),
     true = @bitCast(u64, js.Ref.@"true"),
     false = @bitCast(u64, js.Ref.@"false"),
     undefined = @bitCast(u64, js.Ref.@"undefined"),
     global = @bitCast(u64, js.Ref.global),
+    runtime = @bitCast(u64, js.Ref.runtime),
 
     _,
 

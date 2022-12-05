@@ -34,6 +34,7 @@ pub const Ref = packed struct(u64) {
     pub const @"false": Ref = .{ .id = 3 };
     pub const @"undefined": Ref = .{ .id = 4 };
     pub const global: Ref = .{ .id = 5 };
+    pub const runtime: Ref = .{ .id = 6 };
 
     /// NaN in IEEE-754 is 0b0111_1111_1111_<anything other than all zeroes>.
     /// We always force NaN to have a 1-bit set in the 4th byte from the MSB
@@ -65,7 +66,7 @@ pub const Ref = packed struct(u64) {
                 1 => .null,
                 2, 3 => .boolean,
                 4 => .undefined,
-                5 => .object,
+                5, 6 => .object,
                 else => unreachable,
             },
         };
