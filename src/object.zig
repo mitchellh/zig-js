@@ -103,6 +103,34 @@ pub const Object = struct {
         return try convertValue(T, alloc, v);
     }
 
+    /// Construct an object from this value.
+    pub fn new(
+        self: Object,
+        args: anytype,
+    ) !Object {
+        // Build our arguments.
+        const argsInfo = @typeInfo(@TypeOf(args)).Struct;
+        assert(argsInfo.is_tuple);
+        var js_args: [argsInfo.fields.len]js.Value = undefined;
+        inline for (argsInfo.fields) |field, i| {
+            js_args[i] = switch (field.field_type) {
+                js.Object => @field(args, field.name).value,
+                else => js.Value.init(@field(args, field.name)),
+            };
+        }
+
+        // We need to free all the arguments given to use that weren't
+        // already js.Objects. If they were, its up to the caller to free.
+        defer inline for (argsInfo.fields) |field, i| {
+            if (field.field_type != js.Object) js_args[i].deinit();
+        };
+
+        // Invoke
+        const v = try self.value.new(&js_args);
+        errdefer v.deinit();
+        return Object{ .value = v };
+    }
+
     fn convertValue(comptime T: type, alloc: Allocator, v: js.Value) !Get(T).result {
         const info = Get(T);
         const t_info = @typeInfo(T);
