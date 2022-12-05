@@ -84,7 +84,7 @@ pub const Object = struct {
         var js_args: [argsInfo.fields.len]js.Value = undefined;
         inline for (argsInfo.fields) |field, i| {
             js_args[i] = switch (field.field_type) {
-                js.Object => @field(args, field.name),
+                js.Object => @field(args, field.name).value,
                 else => js.Value.init(@field(args, field.name)),
             };
         }
