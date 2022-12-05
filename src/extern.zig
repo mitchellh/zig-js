@@ -11,7 +11,7 @@ pub usingnamespace if (!builtin.is_test) struct {
     pub extern "zig-js" fn valueObjectCreate(out: *u64) void;
     pub extern "zig-js" fn valueStringCreate(out: *u64, addr: [*]const u8, len: u64) void;
     pub extern "zig-js" fn valueStringLen(id: u64) u64;
-    pub extern "zig-js" fn valueStringCopy(id: u64, addr: *u8, max: u64) void;
+    pub extern "zig-js" fn valueStringCopy(id: u64, addr: [*]u8, max: u64) void;
     pub extern "zig-js" fn valueDeinit(id: u64) void;
     pub extern "zig-js" fn funcApply(
         out: *u64,

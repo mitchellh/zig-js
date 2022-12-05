@@ -169,7 +169,7 @@ pub const Value = enum(u64) {
 
         // Get the length and allocate our pointer
         const len = ext.valueStringLen(self.ref().id);
-        var buf = try alloc.alloc(u8, len);
+        var buf = try alloc.alloc(u8, @intCast(usize, len));
         errdefer alloc.free(buf);
 
         // Copy the string into the buffer
