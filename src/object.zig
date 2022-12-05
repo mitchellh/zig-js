@@ -114,6 +114,7 @@ pub const Object = struct {
         const vt = v.typeOf();
         if (vt == .null or vt == .undefined) {
             if (optional) return null;
+            if (info.result == void) return;
             return js.Error.InvalidType;
         }
 
