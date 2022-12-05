@@ -105,7 +105,8 @@ pub const Object = struct {
 
     fn convertValue(comptime T: type, alloc: Allocator, v: js.Value) !Get(T).result {
         const info = Get(T);
-        const optional = @typeInfo(T) == .Optional;
+        const t_info = @typeInfo(T);
+        const optional = t_info == .Optional;
 
         // Get the value no matter what type it is.
         defer if (!info.retains) v.deinit();
@@ -131,7 +132,10 @@ pub const Object = struct {
             []u8 => return try v.string(alloc),
             f16, f32, f64 => return @floatCast(info.result_unwrapped, try v.float()),
 
-            else => {},
+            else => if (t_info == .Int) return @floatToInt(
+                info.result_unwrapped,
+                try v.float(),
+            ),
         }
 
         return js.Error.InvalidType;
@@ -159,17 +163,21 @@ pub const Object = struct {
         const tInfo = @typeInfo(Raw);
         const T = if (tInfo == .Optional) tInfo.Optional.child else Raw;
 
-        var info: GetInfo = switch (T) {
-            void => .{ .result = void },
-            Object => .{ .result = Object, .retains = true },
-            js.String => .{ .result = []u8, .allocs = true },
-            js.Value => .{ .result = js.Value, .retains = true },
-            bool, f16, f32, f64 => .{ .result = T },
+        var info: GetInfo = info: {
+            if (tInfo == .Int) break :info .{ .result = T };
 
-            else => {
-                @compileLog(T);
-                @compileError("unsupported type");
-            },
+            break :info switch (T) {
+                void => .{ .result = void },
+                Object => .{ .result = Object, .retains = true },
+                js.String => .{ .result = []u8, .allocs = true },
+                js.Value => .{ .result = js.Value, .retains = true },
+                bool, f16, f32, f64 => .{ .result = T },
+
+                else => {
+                    @compileLog(T);
+                    @compileError("unsupported type");
+                },
+            };
         };
 
         // We start with the unwrapped being the same
