@@ -34,6 +34,11 @@ pub const Error = error{
 /// the lower level Value API by using "Value.global" directly.
 pub const global: object.Object = .{ .value = .global };
 
+/// The runtime value is the "this" value for the ZigJS class in JS.
+/// This is useful to directly accessing the WebAssembly.Memory property
+/// to implement things like JS-to-WASM memcpy.
+pub const runtime: object.Object = .{ .value = .runtime };
+
 /// Shortcut for String.init since this is a common operation.
 pub inline fn string(v: anytype) value.String {
     return value.String.init(v);
