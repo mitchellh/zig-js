@@ -114,12 +114,12 @@ pub const Object = struct {
         const vt = v.typeOf();
         if (vt == .null or vt == .undefined) {
             if (optional) return null;
-            if (info.result == void) return;
+            if (info.result_unwrapped == void) return;
             return js.Error.InvalidType;
         }
 
         // Based on the return type we process the JS value
-        switch (info.result) {
+        switch (info.result_unwrapped) {
             js.Value => return v,
 
             Object => {
@@ -129,7 +129,7 @@ pub const Object = struct {
 
             bool => return try v.boolean(),
             []u8 => return try v.string(alloc),
-            f16, f32, f64 => return @floatCast(info.result, try v.float()),
+            f16, f32, f64 => return @floatCast(info.result_unwrapped, try v.float()),
 
             else => {},
         }
@@ -142,6 +142,10 @@ pub const Object = struct {
         /// The result type for this get.
         result: type,
 
+        /// The same as result in most cases, but unwrapped if result is
+        /// an optional type.
+        result_unwrapped: type = undefined,
+
         /// True if the result type will allocate
         allocs: bool = false,
 
@@ -152,12 +156,10 @@ pub const Object = struct {
     /// Returns the result of a get call based on the type. This also
     /// creates a compile error if trying to get a type that we don't support.
     fn Get(comptime Raw: type) GetInfo {
-        const T = t: {
-            const info = @typeInfo(Raw);
-            break :t if (info == .Optional) info.Optional.child else Raw;
-        };
+        const tInfo = @typeInfo(Raw);
+        const T = if (tInfo == .Optional) tInfo.Optional.child else Raw;
 
-        return switch (T) {
+        var info: GetInfo = switch (T) {
             void => .{ .result = void },
             Object => .{ .result = Object, .retains = true },
             js.String => .{ .result = []u8, .allocs = true },
@@ -169,5 +171,15 @@ pub const Object = struct {
                 @compileError("unsupported type");
             },
         };
+
+        // We start with the unwrapped being the same
+        info.result_unwrapped = info.result;
+
+        // If we're optional, we need to wrap
+        if (tInfo == .Optional) info.result = @Type(.{
+            .Optional = .{ .child = info.result_unwrapped },
+        });
+
+        return info;
     }
 };
