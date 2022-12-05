@@ -164,6 +164,25 @@ export class ZigJS {
     this.storeValue(out, result);
   }
 
+  /**
+   * This can be used to load a value given by an ID. A WASM function
+   * might return a value as an ID. This can be used to retrieve it.
+   * */
+  loadValue(id: number): any {
+    return this.values[id];
+  }
+
+  /**
+   * This removes the value from the values list and returns it. This
+   * will not remove predefined values but can still be used to retrieve
+   * them.
+   * */
+  deleteValue(id: number): any {
+    const val = this.values[id];
+    this.valueDeinit(id);
+    return val;
+  }
+
   loadRef(refAddr: number): any {
     if (this.memory == null) return;
     const view = new DataView(this.memory.buffer);
@@ -180,10 +199,6 @@ export class ZigJS {
   loadRefId(refAddr: number): number {
     if (this.memory == null) return 0;
     return new DataView(this.memory.buffer).getUint32(refAddr, true);
-  }
-
-  loadValue(id: number): any {
-    return this.values[id];
   }
 
   storeValue(out: number, val: any): void {
