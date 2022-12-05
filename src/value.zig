@@ -101,6 +101,11 @@ pub const Value = enum(u64) {
             // here and accept a runtime/compile-time error if x is invalid.
             .Int => init(@intToFloat(f64, x)),
 
+            .Pointer => |p| switch (p.size) {
+                .One, .Many => init(@ptrToInt(x)),
+                else => unreachable,
+            },
+
             else => switch (@TypeOf(x)) {
                 Undefined => .undefined,
                 js.Value => x,
@@ -217,6 +222,13 @@ test "Value.init: undefined" {
 test "Value.init: null" {
     const testing = std.testing;
     try testing.expectEqual(Value.null, Value.init(null));
+}
+
+test "Value.init: pointers" {
+    const testing = std.testing;
+    var x: u64 = undefined;
+    const v = Value.init(&x);
+    try testing.expectEqual(js.Type.number, v.typeOf());
 }
 
 test "Value.init: bools" {

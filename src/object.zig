@@ -152,7 +152,7 @@ pub const Object = struct {
             js.Value => return v,
 
             Object => {
-                if (vt != .object) return js.Error.InvalidType;
+                if (vt != .object and vt != .function) return js.Error.InvalidType;
                 return Object{ .value = v };
             },
 
