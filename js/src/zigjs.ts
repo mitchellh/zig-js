@@ -141,7 +141,7 @@ export class ZigJS {
     const thisVal = this.loadRef(thisRefAddr);
     const args = [];
     for (let i = 0; i < argsLen; i++) {
-      args.push(this.loadRef(argsAddr + (i * 4)));
+      args.push(this.loadRef(argsAddr + (i * 8)));
     }
 
     const result = Reflect.apply(fn, thisVal, args);
