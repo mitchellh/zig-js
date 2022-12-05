@@ -6,16 +6,16 @@ const js = @import("main.zig");
 // This is the API that must be provided by the host environment. For
 // testing we mock it out so that we can test a well-behaved system.
 pub usingnamespace if (!builtin.is_test) struct {
-    pub extern "zig-js" fn valueGet(out: *u64, id: u64, addr: [*]const u8, len: usize) void;
-    pub extern "zig-js" fn valueSet(id: u64, addr: [*]const u8, len: usize, refPtr: *const u64) void;
+    pub extern "zig-js" fn valueGet(out: *u64, id: u32, addr: [*]const u8, len: usize) void;
+    pub extern "zig-js" fn valueSet(id: u32, addr: [*]const u8, len: usize, refPtr: *const u64) void;
     pub extern "zig-js" fn valueObjectCreate(out: *u64) void;
-    pub extern "zig-js" fn valueStringCreate(out: *u64, addr: [*]const u8, len: u64) void;
-    pub extern "zig-js" fn valueStringLen(id: u64) u64;
-    pub extern "zig-js" fn valueStringCopy(id: u64, addr: [*]u8, max: u64) void;
-    pub extern "zig-js" fn valueDeinit(id: u64) void;
+    pub extern "zig-js" fn valueStringCreate(out: *u64, addr: [*]const u8, len: u32) void;
+    pub extern "zig-js" fn valueStringLen(id: u32) u32;
+    pub extern "zig-js" fn valueStringCopy(id: u32, addr: [*]u8, max: u32) void;
+    pub extern "zig-js" fn valueDeinit(id: u32) void;
     pub extern "zig-js" fn funcApply(
         out: *u64,
-        func: u64,
+        func: u32,
         thisPtr: *const u64,
         argsPtr: [*]const u64,
         argsLen: usize,
