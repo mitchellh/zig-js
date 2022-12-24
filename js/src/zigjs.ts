@@ -261,8 +261,13 @@ export class ZigJS {
 
   loadString(ptr: number, len: number): string {
     if (this.memory == null) return "";
-    const view = new DataView(this.memory.buffer, ptr, Number(len));
-    return decoder.decode(view);
+
+    // We slice a clamped array instead of using a DataView so that
+    // we can also support SharedArrayBuffers. It would probably be slightly
+    // more performant (maybe?) to check and use either.
+    const arr = new Uint8ClampedArray(this.memory.buffer, ptr, Number(len));
+    const data = arr.slice();
+    return decoder.decode(data);
   }
 }
 

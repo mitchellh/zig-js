@@ -34,6 +34,30 @@ test('valueGet', () => {
   expect(view.getFloat64(64, true)).toEqual(1234);
 });
 
+test('valueGet with shared memory', () => {
+  const st = new ZigJS();
+  const obj = st.importObject();
+  const f = obj["zig-js"].valueGet;
+
+  // Set our memory
+  const memory = new WebAssembly.Memory({ initial: 1, maximum: 10, shared: true });
+  const view = new DataView(memory.buffer);
+  st.memory = memory;
+
+  // Write our string
+  const key = "__zigjs_number";
+  const encoder = new TextEncoder();
+  const write = encoder.encodeInto(key, new Uint8Array(memory.buffer));
+  expect(write.written).toBeGreaterThan(0);
+
+  // Write our key into the global value
+  globalThis[key] = 1234;
+
+  // Read it
+  f(64, predefined.globalThis, 0, write.written ?? 0);
+  expect(view.getFloat64(64, true)).toEqual(1234);
+});
+
 test('valueGet: runtime', () => {
   const st = new ZigJS();
   const obj = st.importObject();
