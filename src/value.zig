@@ -68,10 +68,10 @@ pub const Value = enum(u64) {
     // for the ZigJS JS class. This makes it possible to access the memory
     // for example.
     nan = @bitCast(u64, js.Ref.nan),
-    null = @bitCast(u64, js.Ref.@"null"),
-    true = @bitCast(u64, js.Ref.@"true"),
-    false = @bitCast(u64, js.Ref.@"false"),
-    undefined = @bitCast(u64, js.Ref.@"undefined"),
+    null = @bitCast(u64, js.Ref.null),
+    true = @bitCast(u64, js.Ref.true),
+    false = @bitCast(u64, js.Ref.false),
+    undefined = @bitCast(u64, js.Ref.undefined),
     global = @bitCast(u64, js.Ref.global),
     runtime = @bitCast(u64, js.Ref.runtime),
 
