@@ -56,6 +56,20 @@ pub const Object = struct {
         try self.value.set(n, js_value);
     }
 
+    /// Evaluate a previously created String as a js script
+    pub fn eval(
+        self: Object,
+        comptime T: type,
+        script: js.String,
+    ) !Get(T).result {
+        var result: u64 = undefined;
+        var ref = @bitCast(u64, @enumToInt(self.value));
+        @import("extern.zig").funcEval( &result, &ref, @as(u32, @ptrToInt(script.ptr)), @as(u32, script.len));
+        const rv = @intToEnum(js.Value, result);
+        return try convertValue(T, undefined, rv);
+    }
+
+
     /// Call a function on a object. This will set the "this" parameter
     /// to the object properly. This should only be used with return types
     /// that don't need any allocations.

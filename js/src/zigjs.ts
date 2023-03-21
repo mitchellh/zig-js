@@ -63,6 +63,7 @@ export class ZigJS {
         valueStringCopy: this.valueStringCopy.bind(this),
         valueNew: this.valueNew.bind(this),
         funcApply: this.funcApply.bind(this),
+        funcEval: this.funcEval.bind(this),
       },
     };
   }
@@ -162,6 +163,20 @@ export class ZigJS {
 
     const result = Reflect.apply(fn, thisVal, args);
     this.storeValue(out, result);
+  }
+
+  /**
+   * Eval a js string by id with 'this' set to current Object. Return the last statement.
+   * */
+  protected funcEval(__out: number, __thisRef: number, __script_addr: number, __script_len: number): void {
+    const __thisVal = this.loadRef(__thisRef);
+    const __script = this.loadString(__script_addr, __script_len);
+    function __f (){
+      return eval(__script);
+    }
+  
+    const __result = __f.call(__thisVal);
+    this.storeValue(__out, __result);
   }
 
   /**
@@ -282,5 +297,6 @@ export interface ImportObject {
     valueDeinit: (id: number) => void;
     valueNew: (out: number, funcId: number, argsPtr: number, argsLen: number) => void;
     funcApply: (out: number, funcId: number, thisRef: number, argsPtr: number, argsLen: number) => void;
+    funcEval: (__out: number, __thisRef: number, __script_addr: number, __script_len: number) => void;
   };
 };
