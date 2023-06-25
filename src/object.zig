@@ -160,7 +160,7 @@ pub const Object = struct {
             []u8 => return try v.string(alloc),
             f16, f32, f64 => return @floatCast(info.result_unwrapped, try v.float()),
 
-            else => if (t_info == .Int) return @floatToInt(
+            else => if (t_info == .Int) return @intFromFloat(
                 info.result_unwrapped,
                 try v.float(),
             ),

@@ -89,20 +89,20 @@ pub const Value = enum(u64) {
         return switch (@typeInfo(@TypeOf(x))) {
             .Null => .null,
             .Bool => if (x) .true else .false,
-            .ComptimeInt => init(@intToFloat(f64, x)),
+            .ComptimeInt => init(@floatFromInt(f64, x)),
             .ComptimeFloat => init(@floatCast(f64, x)),
             .Float => |t| float: {
                 if (t.bits > 64) @compileError("Value only supports floats up to 64 bits");
                 if (std.math.isNan(x)) break :float .nan;
-                break :float @intToEnum(Value, @bitCast(u64, @floatCast(f64, x)));
+                break :float @enumFromInt(Value, @bitCast(u64, @floatCast(f64, x)));
             },
 
             // All numbers in JS are 64-bit floats, so we try the conversion
             // here and accept a runtime/compile-time error if x is invalid.
-            .Int => init(@intToFloat(f64, x)),
+            .Int => init(@floatFromInt(f64, x)),
 
             .Pointer => |p| switch (p.size) {
-                .One, .Many => init(@ptrToInt(x)),
+                .One, .Many => init(@intFromPtr(x)),
                 else => unreachable,
             },
 
@@ -112,12 +112,12 @@ pub const Value = enum(u64) {
                 js.Object => blk: {
                     var result: u64 = undefined;
                     ext.valueObjectCreate(&result);
-                    break :blk @intToEnum(Value, result);
+                    break :blk @enumFromInt(Value, result);
                 },
                 String => blk: {
                     var result: u64 = undefined;
                     ext.valueStringCreate(&result, x.ptr, x.len);
-                    break :blk @intToEnum(Value, result);
+                    break :blk @enumFromInt(Value, result);
                 },
                 else => unreachable,
             },
@@ -136,7 +136,7 @@ pub const Value = enum(u64) {
         if (self.typeOf() != .object) return js.Error.InvalidType;
         var result: u64 = undefined;
         ext.valueGet(&result, self.ref().id, n.ptr, n.len);
-        return @intToEnum(Value, result);
+        return @enumFromInt(Value, result);
     }
 
     /// Set the value of a property on an object.
@@ -156,7 +156,7 @@ pub const Value = enum(u64) {
             @ptrCast([*]const u64, args.ptr),
             args.len,
         );
-        return @intToEnum(Value, result);
+        return @enumFromInt(Value, result);
     }
 
     /// Call "new" on this value like a constructor.
@@ -169,7 +169,7 @@ pub const Value = enum(u64) {
             @ptrCast([*]const u64, args.ptr),
             args.len,
         );
-        return @intToEnum(Value, result);
+        return @enumFromInt(Value, result);
     }
 
     /// Returns the bool value if this is a boolean.
@@ -181,7 +181,7 @@ pub const Value = enum(u64) {
     /// Returns the float value if this is a number.
     pub fn float(self: Value) !f64 {
         if (self.typeOf() != .number) return js.Error.InvalidType;
-        return @bitCast(f64, @enumToInt(self));
+        return @bitCast(f64, @intFromEnum(self));
     }
 
     /// Returns the UTF-8 encoded string value. The resulting value must be
@@ -206,7 +206,7 @@ pub const Value = enum(u64) {
     }
 
     inline fn ref(self: Value) js.Ref {
-        return @bitCast(js.Ref, @enumToInt(self));
+        return @bitCast(js.Ref, @intFromEnum(self));
     }
 };
 
