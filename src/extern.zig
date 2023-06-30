@@ -63,7 +63,7 @@ pub usingnamespace if (!builtin.is_test) struct {
     pub fn valueGet(out: *u64, id: u32, addr: [*]const u8, len: usize) void {
         const obj = &values.items[id].object;
         const key = addr[0..len];
-        out.* = obj.get(key) orelse @bitCast(u64, js.Ref.null);
+        out.* = obj.get(key) orelse @bitCast(js.Ref.null);
     }
 
     pub fn valueSet(id: u32, addr: [*]const u8, len: usize, ref_ptr: *const u64) void {
@@ -74,8 +74,8 @@ pub usingnamespace if (!builtin.is_test) struct {
 
     pub fn valueObjectCreate(out: *u64) void {
         values.append(alloc, .{ .object = .{} }) catch unreachable;
-        const ref: js.Ref = .{ .type_id = .object, .id = @intCast(u32, values.items.len - 1) };
-        out.* = @bitCast(u64, ref);
+        const ref: js.Ref = .{ .type_id = .object, .id = @intCast(values.items.len - 1) };
+        out.* = @bitCast(ref);
     }
 
     pub fn valueStringCreate(out: *u64, addr: [*]const u8, len: usize) void {
@@ -86,12 +86,12 @@ pub usingnamespace if (!builtin.is_test) struct {
         values.append(alloc, .{ .string = copy }) catch unreachable;
 
         // Create the ref
-        const ref: js.Ref = .{ .type_id = .string, .id = @intCast(u32, values.items.len - 1) };
-        out.* = @bitCast(u64, ref);
+        const ref: js.Ref = .{ .type_id = .string, .id = @intCast(values.items.len - 1) };
+        out.* = @bitCast(ref);
     }
 
     pub fn valueStringLen(id: u32) u32 {
-        return @intCast(u32, values.items[id].string.len);
+        return @intCast(values.items[id].string.len);
     }
 
     pub fn valueStringCopy(id: u32, addr: [*]u8, max: usize) void {

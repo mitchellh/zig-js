@@ -83,7 +83,7 @@ pub const Ref = packed struct(u64) {
 
     pub fn toF64(self: Ref) f64 {
         assert(self.typeOf() == .number);
-        return @bitCast(f64, self);
+        return @bitCast(self);
     }
 
     // This just helps test what JS will do
@@ -91,8 +91,8 @@ pub const Ref = packed struct(u64) {
         const testing = std.testing;
 
         {
-            const n: u64 = (@intCast(u64, @intCast(u32, nanHead) << 3 | 2) << 32) | 14;
-            const ref = @bitCast(Ref, n);
+            const n: u64 = (@as(u64, @intCast(@as(u32, @intCast(nanHead)) << 3 | 2)) << 32) | 14;
+            const ref: Ref = @bitCast(n);
             try testing.expectEqual(nanHead, ref.head);
             try testing.expectEqual(js.Type.string, ref.typeOf());
             try testing.expectEqual(@as(u32, 14), ref.id);
@@ -112,14 +112,14 @@ pub const Ref = packed struct(u64) {
         const testing = std.testing;
 
         {
-            const ref = @bitCast(Ref, @bitCast(u64, @as(f64, 1.234)));
+            const ref = @as(Ref, @bitCast(@as(u64, @bitCast(@as(f64, 1.234)))));
             try testing.expectEqual(js.Type.number, ref.typeOf());
             try testing.expectEqual(@as(f64, 1.234), ref.toF64());
         }
 
         // zero
         {
-            const ref = @bitCast(Ref, @bitCast(u64, @as(f64, 0)));
+            const ref = @as(Ref, @bitCast(@as(u64, @bitCast(@as(f64, 0)))));
             try testing.expectEqual(js.Type.number, ref.typeOf());
             try testing.expectEqual(@as(f64, 0), ref.toF64());
         }
@@ -130,14 +130,14 @@ pub const Ref = packed struct(u64) {
 
         // Stdlib nan
         {
-            const ref = @bitCast(Ref, @bitCast(u64, std.math.nan_f64));
+            const ref = @as(Ref, @bitCast(@as(u64, @bitCast(std.math.nan_f64))));
             try testing.expectEqual(js.Type.number, ref.typeOf());
             try testing.expect(std.math.isNan(ref.toF64()));
         }
 
         // Manual nan
         {
-            const ref = @bitCast(Ref, @as(u64, 0x7FF8_0000_0000_0000));
+            const ref = @as(Ref, @bitCast(@as(u64, 0x7FF8_0000_0000_0000)));
             try testing.expectEqual(js.Type.number, ref.typeOf());
         }
     }

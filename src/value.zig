@@ -43,7 +43,7 @@ pub const String = struct {
         const testing = std.testing;
         const raw = "hello!";
         const v = init(raw);
-        try testing.expectEqual(@ptrCast([*]const u8, raw), v.ptr);
+        try testing.expectEqual(@as([*]const u8, @ptrCast(raw)), v.ptr);
         try testing.expectEqual(raw.len, v.len);
     }
 
@@ -51,7 +51,7 @@ pub const String = struct {
         const testing = std.testing;
         const raw = @as([]const u8, "hello!");
         const v = init(raw);
-        try testing.expectEqual(@ptrCast([*]const u8, raw), v.ptr);
+        try testing.expectEqual(@as([*]const u8, @ptrCast(raw)), v.ptr);
         try testing.expectEqual(raw.len, v.len);
     }
 };
@@ -67,13 +67,13 @@ pub const Value = enum(u64) {
     // "runtime". The "runtime" value gives access to the "this" value
     // for the ZigJS JS class. This makes it possible to access the memory
     // for example.
-    nan = @bitCast(u64, js.Ref.nan),
-    null = @bitCast(u64, js.Ref.null),
-    true = @bitCast(u64, js.Ref.true),
-    false = @bitCast(u64, js.Ref.false),
-    undefined = @bitCast(u64, js.Ref.undefined),
-    global = @bitCast(u64, js.Ref.global),
-    runtime = @bitCast(u64, js.Ref.runtime),
+    nan = @bitCast(js.Ref.nan),
+    null = @bitCast(js.Ref.null),
+    true = @bitCast(js.Ref.true),
+    false = @bitCast(js.Ref.false),
+    undefined = @bitCast(js.Ref.undefined),
+    global = @bitCast(js.Ref.global),
+    runtime = @bitCast(js.Ref.runtime),
 
     _,
 
@@ -89,17 +89,17 @@ pub const Value = enum(u64) {
         return switch (@typeInfo(@TypeOf(x))) {
             .Null => .null,
             .Bool => if (x) .true else .false,
-            .ComptimeInt => init(@floatFromInt(f64, x)),
-            .ComptimeFloat => init(@floatCast(f64, x)),
+            .ComptimeInt => init(@as(f64, @floatFromInt(x))),
+            .ComptimeFloat => init(@as(f64, @floatCast(x))),
             .Float => |t| float: {
                 if (t.bits > 64) @compileError("Value only supports floats up to 64 bits");
                 if (std.math.isNan(x)) break :float .nan;
-                break :float @enumFromInt(Value, @bitCast(u64, @floatCast(f64, x)));
+                break :float @as(Value, @enumFromInt(@as(u64, @bitCast(@as(f64, @floatCast(x))))));
             },
 
             // All numbers in JS are 64-bit floats, so we try the conversion
             // here and accept a runtime/compile-time error if x is invalid.
-            .Int => init(@floatFromInt(f64, x)),
+            .Int => init(@as(f64, @floatFromInt(x))),
 
             .Pointer => |p| switch (p.size) {
                 .One, .Many => init(@intFromPtr(x)),
@@ -112,12 +112,12 @@ pub const Value = enum(u64) {
                 js.Object => blk: {
                     var result: u64 = undefined;
                     ext.valueObjectCreate(&result);
-                    break :blk @enumFromInt(Value, result);
+                    break :blk @enumFromInt(result);
                 },
                 String => blk: {
                     var result: u64 = undefined;
                     ext.valueStringCreate(&result, x.ptr, x.len);
-                    break :blk @enumFromInt(Value, result);
+                    break :blk @enumFromInt(result);
                 },
                 else => unreachable,
             },
@@ -136,13 +136,13 @@ pub const Value = enum(u64) {
         if (self.typeOf() != .object) return js.Error.InvalidType;
         var result: u64 = undefined;
         ext.valueGet(&result, self.ref().id, n.ptr, n.len);
-        return @enumFromInt(Value, result);
+        return @enumFromInt(result);
     }
 
     /// Set the value of a property on an object.
     pub fn set(self: Value, n: []const u8, v: Value) !void {
         if (self.typeOf() != .object) return js.Error.InvalidType;
-        ext.valueSet(self.ref().id, n.ptr, n.len, &@bitCast(u64, v.ref()));
+        ext.valueSet(self.ref().id, n.ptr, n.len, &@as(u64, @bitCast(v.ref())));
     }
 
     /// Call this value as a function.
@@ -152,11 +152,11 @@ pub const Value = enum(u64) {
         ext.funcApply(
             &result,
             self.ref().id,
-            &@bitCast(u64, this.ref()),
-            @ptrCast([*]const u64, args.ptr),
+            &@as(u64, @bitCast(this.ref())),
+            @ptrCast(args.ptr),
             args.len,
         );
-        return @enumFromInt(Value, result);
+        return @enumFromInt(result);
     }
 
     /// Call "new" on this value like a constructor.
@@ -166,10 +166,10 @@ pub const Value = enum(u64) {
         ext.valueNew(
             &result,
             self.ref().id,
-            @ptrCast([*]const u64, args.ptr),
+            @ptrCast(args.ptr),
             args.len,
         );
-        return @enumFromInt(Value, result);
+        return @enumFromInt(result);
     }
 
     /// Returns the bool value if this is a boolean.
@@ -181,7 +181,7 @@ pub const Value = enum(u64) {
     /// Returns the float value if this is a number.
     pub fn float(self: Value) !f64 {
         if (self.typeOf() != .number) return js.Error.InvalidType;
-        return @bitCast(f64, @intFromEnum(self));
+        return @bitCast(@intFromEnum(self));
     }
 
     /// Returns the UTF-8 encoded string value. The resulting value must be
@@ -191,7 +191,7 @@ pub const Value = enum(u64) {
 
         // Get the length and allocate our pointer
         const len = ext.valueStringLen(self.ref().id);
-        var buf = try alloc.alloc(u8, @intCast(usize, len));
+        var buf = try alloc.alloc(u8, @intCast(len));
         errdefer alloc.free(buf);
 
         // Copy the string into the buffer
@@ -206,7 +206,7 @@ pub const Value = enum(u64) {
     }
 
     inline fn ref(self: Value) js.Ref {
-        return @bitCast(js.Ref, @intFromEnum(self));
+        return @bitCast(@intFromEnum(self));
     }
 };
 
@@ -267,7 +267,7 @@ test "Value.init: strings" {
 
     {
         const str = "hello!";
-        const v = Value.init(String{ .ptr = @ptrCast([*]const u8, str), .len = str.len });
+        const v = Value.init(String{ .ptr = @ptrCast(str), .len = str.len });
         defer v.deinit();
         try testing.expectEqual(js.Type.string, v.typeOf());
 

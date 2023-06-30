@@ -158,11 +158,11 @@ pub const Object = struct {
 
             bool => return try v.boolean(),
             []u8 => return try v.string(alloc),
-            f16, f32, f64 => return @floatCast(info.result_unwrapped, try v.float()),
+            f16, f32, f64 => return @as(info.result_unwrapped, @floatCast(try v.float())),
 
-            else => if (t_info == .Int) return @intFromFloat(
+            else => if (t_info == .Int) return @as(
                 info.result_unwrapped,
-                try v.float(),
+                @intFromFloat(try v.float()),
             ),
         }
 
