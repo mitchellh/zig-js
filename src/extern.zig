@@ -21,6 +21,7 @@ pub usingnamespace if (!builtin.is_test) struct {
         argsPtr: [*]const u64,
         argsLen: usize,
     ) void;
+    pub extern "zig-js" fn funcEval(out: *u64, this: *u64, scriptPtr: u32, scriptLen: u32) void;
 } else struct {
     const alloc = std.testing.allocator;
 

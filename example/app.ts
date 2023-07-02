@@ -17,10 +17,11 @@ fetch(url.href).then(response =>
 ).then(bytes =>
   WebAssembly.instantiate(bytes, importObject)
 ).then(results => {
-  const { memory, alert, set_title } = results.instance.exports;
+  const { memory, alert, set_title, zig_eval } = results.instance.exports;
   zjs.memory = memory;
 
   // Call whatever example you want:
   set_title();
+  zig_eval();
   //alert();
 });

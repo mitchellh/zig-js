@@ -15,6 +15,18 @@ fn set_title_() !void {
     try doc.set("title", js.string("Hello!"));
 }
 
+export fn zig_eval() void {
+    __zig_eval() catch unreachable;
+}
+
+fn __zig_eval() !void {
+    const script = js.string(@embedFile("example.payload.js"));
+
+    const doc = try js.global.get(js.Object, "document");
+
+    _ = try doc.eval(void, script);
+}
+
 fn alert_() !void {
     try js.global.call(void, "alert", .{js.string("Hello, world!")});
 }
