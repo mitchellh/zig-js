@@ -1,18 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-pub fn module(b: *std.Build) *std.build.Module {
-    return b.createModule(.{
-        .source_file = .{ .path = (comptime thisDir()) ++ "/src/main.zig" },
-    });
-}
-
-fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
-}
-
-pub const Options = struct {};
-
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -29,6 +17,9 @@ pub fn build(b: *std.Build) !void {
     const tests_run = b.addRunArtifact(tests);
     test_step.dependOn(&tests_run.step);
 
+    const zigjs = b.addModule("zig-js", .{
+        .source_file = .{ .path = "src/main.zig" },
+    });
     // Example
     {
         const wasm = b.addSharedLibrary(.{
@@ -38,7 +29,7 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
         });
         wasm.rdynamic = true;
-        wasm.addModule("zig-js", module(b));
+        wasm.addModule("zig-js", zigjs);
 
         const step = b.step("example", "Build the example project (Zig only)");
         step.dependOn(&b.addInstallArtifact(wasm, .{
