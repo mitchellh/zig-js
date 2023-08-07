@@ -83,7 +83,7 @@ pub const Ref = packed struct(u64) {
 
     pub fn toF64(self: Ref) f64 {
         assert(self.typeOf() == .number);
-        return @as(f64, @bitCast(self));
+        return @bitCast(self);
     }
 
     // This just helps test what JS will do

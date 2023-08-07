@@ -67,6 +67,10 @@ export class ZigJS {
       },
     };
   }
+  
+  getExports(exports): void {
+    this.memory = exports.memory;
+  }
 
   /**
    * Get a value from the JS environment.

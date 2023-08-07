@@ -10,7 +10,7 @@ try {
     const div = document.createElement('pre');
     div.style.backgroundColor = "lightgray";
     div.innerText = JSON.stringify(example, null, 4);
-    this.body.appendChild(div);
+    document.body.appendChild(div);
 } catch (error) {
     console.error(error);
 }

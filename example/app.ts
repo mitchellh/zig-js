@@ -17,8 +17,10 @@ fetch(url.href).then(response =>
 ).then(bytes =>
   WebAssembly.instantiate(bytes, importObject)
 ).then(results => {
-  const { memory, alert, set_title, zig_eval } = results.instance.exports;
-  zjs.memory = memory;
+  zjs.getExports(results.instance.exports);
+  console.log(JSON.stringify(results.instance.exports));
+
+  const { set_title, zig_eval } = results.instance.exports;
 
   // Call whatever example you want:
   set_title();
