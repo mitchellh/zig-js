@@ -19,15 +19,14 @@ pub fn build(b: *std.Build) !void {
 
     const tests = b.addTest(.{
         .name = "js-test",
-        .kind = .test_exe,
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
     });
-    tests.install();
+    b.installArtifact(tests);
 
     const test_step = b.step("test", "Run tests");
-    const tests_run = tests.run();
+    const tests_run = b.addRunArtifact(tests);
     test_step.dependOn(&tests_run.step);
 
     // Example
@@ -38,7 +37,8 @@ pub fn build(b: *std.Build) !void {
             .target = .{ .cpu_arch = .wasm32, .os_tag = .freestanding },
             .optimize = optimize,
         });
-        wasm.setOutputDir("example");
+        wasm.emit_directory = @constCast(&.{ .step = &wasm.step });
+        wasm.rdynamic = true;
         wasm.addModule("zig-js", module(b));
 
         const step = b.step("example", "Build the example project (Zig only)");
