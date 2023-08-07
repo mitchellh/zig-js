@@ -63,12 +63,11 @@ pub const Object = struct {
         script: js.String,
     ) !Get(T).result {
         var result: u64 = undefined;
-        var ref = @bitCast(u64, @enumToInt(self.value));
-        @import("extern.zig").funcEval( &result, &ref, @as(u32, @ptrToInt(script.ptr)), @as(u32, script.len));
-        const rv = @intToEnum(js.Value, result);
+        var ref = @as(u64, @bitCast(@intFromEnum(self.value)));
+        @import("extern.zig").funcEval(&result, &ref, @as(u32, @intFromPtr(script.ptr)), @as(u32, script.len));
+        const rv = @as(js.Value, @enumFromInt(result));
         return try convertValue(T, undefined, rv);
     }
-
 
     /// Call a function on a object. This will set the "this" parameter
     /// to the object properly. This should only be used with return types
@@ -172,11 +171,11 @@ pub const Object = struct {
 
             bool => return try v.boolean(),
             []u8 => return try v.string(alloc),
-            f16, f32, f64 => return @floatCast(info.result_unwrapped, try v.float()),
+            f16, f32, f64 => return @as(info.result_unwrapped, @floatCast(try v.float())),
 
-            else => if (t_info == .Int) return @floatToInt(
+            else => if (t_info == .Int) return @as(
                 info.result_unwrapped,
-                try v.float(),
+                @intFromFloat(try v.float()),
             ),
         }
 
