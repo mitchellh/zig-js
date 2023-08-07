@@ -37,11 +37,12 @@ pub fn build(b: *std.Build) !void {
             .target = .{ .cpu_arch = .wasm32, .os_tag = .freestanding },
             .optimize = optimize,
         });
-        wasm.emit_directory = @constCast(&.{ .step = &wasm.step });
         wasm.rdynamic = true;
         wasm.addModule("zig-js", module(b));
 
         const step = b.step("example", "Build the example project (Zig only)");
-        step.dependOn(&wasm.step);
+        step.dependOn(&b.addInstallArtifact(wasm, .{
+            .dest_dir = .{.override=.{.custom="../example"}},
+        }).step);
     }
 }
