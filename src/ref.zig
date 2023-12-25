@@ -130,7 +130,7 @@ pub const Ref = packed struct(u64) {
 
         // Stdlib nan
         {
-            const ref = @as(Ref, @bitCast(@as(u64, @bitCast(std.math.nan_f64))));
+            const ref = @as(Ref, @bitCast(@as(u64, @bitCast(std.math.nan(f64)))));
             try testing.expectEqual(js.Type.number, ref.typeOf());
             try testing.expect(std.math.isNan(ref.toF64()));
         }
