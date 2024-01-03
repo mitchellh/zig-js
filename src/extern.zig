@@ -95,7 +95,7 @@ pub usingnamespace if (!builtin.is_test) struct {
     }
 
     pub fn valueStringCopy(id: u32, addr: [*]u8, max: usize) void {
-        std.mem.copy(u8, addr[0..max], values.items[id].string);
+        @memcpy(addr[0..max], values.items[id].string);
     }
 
     pub fn valueDeinit(id: u32) void {
