@@ -21,14 +21,13 @@ pub fn build(b: *std.Build) !void {
 
     // Example
     {
-        const wasm_target: std.Target.Query = .{
-            .cpu_arch = .wasm32,
-            .os_tag = .freestanding,
-        };
         const wasm = b.addExecutable(.{
             .name = "example",
             .root_source_file = .{ .path = "example/main.zig" },
-            .target = b.resolveTargetQuery(wasm_target),
+            .target = b.resolveTargetQuery(.{
+                .cpu_arch = .wasm32,
+                .os_tag = .freestanding,
+            }),
             .optimize = optimize,
         });
         wasm.root_module.addImport("zig-js", zig_js_module);
