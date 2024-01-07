@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    _ = b.addModule("zig-js", .{ .source_file = .{ .path = "src/main.zig" } });
+    const zig_js_module = b.addModule("zig-js", .{ .root_source_file = .{ .path = "src/main.zig" } });
 
     const test_exe = b.addTest(.{
         .name = "js-test",
@@ -21,15 +21,27 @@ pub fn build(b: *std.Build) !void {
 
     // Example
     {
-        const wasm = b.addSharedLibrary(.{
+        const wasm = b.addExecutable(.{
             .name = "example",
             .root_source_file = .{ .path = "example/main.zig" },
-            .target = .{ .cpu_arch = .wasm32, .os_tag = .freestanding },
+            .target = b.resolveTargetQuery(.{
+                .cpu_arch = .wasm32,
+                .os_tag = .freestanding,
+            }),
             .optimize = optimize,
         });
-        wasm.addModule("zig-js", b.modules.get("zig-js").?);
+        wasm.root_module.addImport("zig-js", zig_js_module);
+        wasm.entry = .disabled;
+        wasm.export_memory = true;
+
+        // custom's path is relative to zig-out
+        const wasm_install = b.addInstallFileWithDir(
+            wasm.getEmittedBin(),
+            .{ .custom = "../example" },
+            "example.wasm",
+        );
 
         const step = b.step("example", "Build the example project (Zig only)");
-        step.dependOn(&wasm.step);
+        step.dependOn(&wasm_install.step);
     }
 }

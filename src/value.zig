@@ -191,7 +191,7 @@ pub const Value = enum(u64) {
 
         // Get the length and allocate our pointer
         const len = ext.valueStringLen(self.ref().id);
-        var buf = try alloc.alloc(u8, @intCast(len));
+        const buf = try alloc.alloc(u8, @intCast(len));
         errdefer alloc.free(buf);
 
         // Copy the string into the buffer
@@ -239,9 +239,9 @@ test "Value.init: bools" {
 
 test "Value.init: floats" {
     const testing = std.testing;
-    try testing.expectEqual(Value.nan, Value.init(std.math.nan_f16));
-    try testing.expectEqual(Value.nan, Value.init(std.math.nan_f32));
-    try testing.expectEqual(Value.nan, Value.init(std.math.nan_f64));
+    try testing.expectEqual(Value.nan, Value.init(std.math.nan(f16)));
+    try testing.expectEqual(Value.nan, Value.init(std.math.nan(f32)));
+    try testing.expectEqual(Value.nan, Value.init(std.math.nan(f64)));
 
     {
         const v = Value.init(1.234);
