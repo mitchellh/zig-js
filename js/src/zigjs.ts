@@ -205,17 +205,21 @@ export class ZigJS {
     if (this.memory == null) return;
     const view = new DataView(this.memory.buffer);
 
-    if (typeof val === "number") {
-      // We have to turn NaNs into a single value (since NaN can be
-      // represented by multiple encodings).
-      if (isNaN(val)) {
-        view.setUint32(out, predefined.nan, true);
+    switch (typeof val) {
+      case "number":
+        // We have to turn NaNs into a single value (since NaN can be
+        // represented by multiple encodings).
+        if (isNaN(val)) {
+          view.setUint32(out, predefined.nan, true);
+          view.setUint32(out + 4, NAN_PREFIX, true);
+        } else {
+          view.setFloat64(out, val, true);
+        }
+        return;
+      case "boolean":
+        view.setUint32(out, val ? predefined.true : predefined.false, true);
         view.setUint32(out + 4, NAN_PREFIX, true);
-      } else {
-        view.setFloat64(out, val, true);
-      }
-
-      return;
+        return;
     }
 
     if (val === null) {
