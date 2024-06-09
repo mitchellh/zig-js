@@ -5,11 +5,11 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const zig_js_module = b.addModule("zig-js", .{ .root_source_file = .{ .path = "src/main.zig" } });
+    const zig_js_module = b.addModule("zig-js", .{ .root_source_file = b.path("src/main.zig") });
 
     const test_exe = b.addTest(.{
         .name = "js-test",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) !void {
     {
         const wasm = b.addExecutable(.{
             .name = "example",
-            .root_source_file = .{ .path = "example/main.zig" },
+            .root_source_file = b.path("example/main.zig"),
             .target = b.resolveTargetQuery(.{
                 .cpu_arch = .wasm32,
                 .os_tag = .freestanding,
