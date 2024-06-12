@@ -173,7 +173,7 @@ pub const Value = enum(u64) {
     }
 
     /// Returns the bool value if this is a boolean.
-    pub fn boolean(self: Value) !f64 {
+    pub fn boolean(self: Value) !bool {
         if (self.typeOf() != .boolean) return js.Error.InvalidType;
         return self == .true;
     }
