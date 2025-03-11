@@ -8,10 +8,6 @@ Note this makes it particularly easy for Zig to call into JS. This
 doesn't help for JS calling into Zig. This is more akin to Go's
 `syscall/js` package and not like Rust's `wasm-bindgen`.
 
-Note: the main branch of this repository attempts to remain compatible
-with the latest nightly release of Zig, and therefore may not be compatible
-with official Zig releases.
-
 ## Example
 
 ```zig
