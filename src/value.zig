@@ -17,13 +17,13 @@ pub const String = struct {
     /// Initialize a string from one of the many string representations in Zig.
     pub fn init(x: anytype) String {
         switch (@typeInfo(@TypeOf(x))) {
-            .Pointer => |p| switch (p.size) {
-                .One => return .{
+            .pointer => |p| switch (p.size) {
+                .one => return .{
                     .ptr = x,
-                    .len = @typeInfo(p.child).Array.len,
+                    .len = @typeInfo(p.child).array.len,
                 },
 
-                .Slice => {
+                .slice => {
                     assert(p.child == u8);
                     return .{ .ptr = x.ptr, .len = x.len };
                 },
@@ -87,11 +87,11 @@ pub const Value = enum(u64) {
     /// Objects are created by passing in the empty Object struct.
     pub fn init(x: anytype) Value {
         return switch (@typeInfo(@TypeOf(x))) {
-            .Null => .null,
-            .Bool => if (x) .true else .false,
-            .ComptimeInt => init(@as(f64, @floatFromInt(x))),
-            .ComptimeFloat => init(@as(f64, @floatCast(x))),
-            .Float => |t| float: {
+            .null => .null,
+            .bool => if (x) .true else .false,
+            .comptime_int => init(@as(f64, @floatFromInt(x))),
+            .comptime_float => init(@as(f64, @floatCast(x))),
+            .float => |t| float: {
                 if (t.bits > 64) @compileError("Value only supports floats up to 64 bits");
                 if (std.math.isNan(x)) break :float .nan;
                 break :float @as(Value, @enumFromInt(@as(u64, @bitCast(@as(f64, @floatCast(x))))));
@@ -99,10 +99,10 @@ pub const Value = enum(u64) {
 
             // All numbers in JS are 64-bit floats, so we try the conversion
             // here and accept a runtime/compile-time error if x is invalid.
-            .Int => init(@as(f64, @floatFromInt(x))),
+            .int => init(@as(f64, @floatFromInt(x))),
 
-            .Pointer => |p| switch (p.size) {
-                .One, .Many => init(@intFromPtr(x)),
+            .pointer => |p| switch (p.size) {
+                .one, .many => init(@intFromPtr(x)),
                 else => unreachable,
             },
 
