@@ -37,6 +37,7 @@ pub fn build(b: *std.Build) !void {
         wasm.root_module.addImport("zig-js", zig_js_module);
         wasm.entry = .disabled;
         wasm.export_memory = true;
+        wasm.rdynamic = true;
 
         // custom's path is relative to zig-out
         const wasm_install = b.addInstallFileWithDir(
